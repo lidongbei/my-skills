@@ -1,0 +1,47 @@
+{
+  "skill_name": "team-memory",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "把刚才关于 checkjob 千万级性能瓶颈的本地 memory 提炼成项目团队可复用的仓库文档，不要把全文塞进 CLAUDE.md，只加索引入口。",
+      "expected_output": "Uses the project-memory track: creates docs/memory/<year>/<month>/<date-seq>-checkjob-*.md, updates docs/memory/MEMORY.md, and adds only a lightweight project CLAUDE.md pointer if missing.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "这个使用习惯我要多个项目都复用：长期规约不要塞进项目 CLAUDE.md，统一写到 HABIT.md。",
+      "expected_output": "Uses the human-habit track: reads existing ~/.claude/HABIT.md first, merges with similar habits if present, keeps habit count <= 30, and writes a concise cross-project habit without creating docs/memory project docs.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "把这次性能分析沉淀到仓库 memory；另外记住我的个人习惯：以后跨项目的规约统一放 HABIT.md。",
+      "expected_output": "Splits mixed content into both tracks: project analysis goes to docs/memory and cross-project personal habit goes to ~/.claude/HABIT.md after duplicate/conflict/count checks.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "HABIT.md 里已经有‘CLAUDE.md 只放轻量入口’，现在再记一个：不要把全文塞进 CLAUDE.md，只放入口。",
+      "expected_output": "Does not append a duplicate habit; merges or updates the existing habit section and reports that it was merged.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "HABIT.md 里已有‘保存习惯前先检查冲突’，现在我要新增相反习惯：以后不检查冲突直接追加。",
+      "expected_output": "Detects conflict and asks the user to choose which habit should win before writing anything.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "我的 HABIT.md 已经有 30 条习惯了，再加一条：以后所有回答都写三种风格。",
+      "expected_output": "Does not add a 31st habit; proposes a cleanup/merge plan and asks the user which habits to merge, retire, or keep.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "更新 README，说明怎么启动项目。",
+      "expected_output": "Should not trigger team-memory because this is ordinary documentation, not memory curation or habit capture.",
+      "files": []
+    }
+  ]
+}
