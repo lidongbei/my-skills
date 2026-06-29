@@ -1,6 +1,6 @@
 {
   "name": "my-skills",
-  "description": "Personal agent skills plugin containing team-memory and idea-shaping skills.",
+  "description": "Personal agent skills plugin containing coding-workflow, team-memory, idea-shaping, and writing-skills.",
   "version": "0.1.0",
   "author": {
     "name": "Administrator"
