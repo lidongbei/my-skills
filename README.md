@@ -1,6 +1,6 @@
 # my-skills
 
-A single standard agent skills plugin containing two skills: `team-memory` and `idea-shaping`.
+A single standard agent skills plugin containing three skills: `team-memory`, `idea-shaping`, and `writing-skills`.
 
 ## Layout
 
@@ -13,10 +13,18 @@ my-skills/
 ├── skills/
 │   ├── idea-shaping/
 │   │   └── SKILL.md
-│   └── team-memory/
+│   ├── team-memory/
+│   │   ├── SKILL.md
+│   │   └── evals/
+│   │       └── evals.json
+│   └── writing-skills/
 │       ├── SKILL.md
-│       └── evals/
-│           └── evals.json
+│       ├── anthropic-best-practices.md
+│       ├── graphviz-conventions.dot
+│       ├── persuasion-principles.md
+│       ├── testing-skills-with-subagents.md
+│       └── examples/
+│           └── CLAUDE_MD_TESTING.md
 ├── adapters/                # runtime-specific install notes
 └── scripts/                 # validation and sync helpers
 ```
@@ -25,6 +33,7 @@ my-skills/
 
 - `team-memory` — curates reusable memory into project/team memory or cross-project habits.
 - `idea-shaping` — shapes product, feature, project, startup, side-project, or internal-tool ideas when explicitly invoked.
+- `writing-skills` — creates, edits, and verifies skills with a TDD-style workflow before deployment.
 
 ## Canonical Rules
 
@@ -35,7 +44,7 @@ Core rules:
 - The repository root is the plugin root.
 - `.claude-plugin/plugin.json` is the canonical plugin manifest.
 - Skills live directly under `skills/<skill-name>/SKILL.md`.
-- This plugin currently contains exactly `team-memory` and `idea-shaping`.
+- This plugin currently contains exactly `team-memory`, `idea-shaping`, and `writing-skills`.
 
 ## Validation
 

@@ -7,7 +7,7 @@ This repository is one standard agent skills plugin.
 - The repository root is the plugin root.
 - Canonical plugin metadata lives in `.claude-plugin/plugin.json`.
 - Runtime skills live in `skills/<skill-name>/SKILL.md`.
-- The only current skills are `team-memory` and `idea-shaping`.
+- The current skills are `team-memory`, `idea-shaping`, and `writing-skills`.
 - `PROJECT_SPEC.md` is the source of truth for future skill additions.
 
 ## Rules for Agents

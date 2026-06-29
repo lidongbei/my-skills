@@ -33,6 +33,7 @@ Current approved skills:
 
 - `team-memory`
 - `idea-shaping`
+- `writing-skills`
 
 ## Tool Mapping Notes
 

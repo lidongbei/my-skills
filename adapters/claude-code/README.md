@@ -20,7 +20,7 @@ Preview installation:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
 ```
 
-Install the two approved skills:
+Install the three approved skills:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
@@ -30,6 +30,7 @@ The script installs only:
 
 - `team-memory`
 - `idea-shaping`
+- `writing-skills`
 
 ## Policy
 

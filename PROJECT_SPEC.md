@@ -18,10 +18,11 @@ skills/<skill-name>/SKILL.md
 
 ## Current Skills
 
-This plugin currently contains exactly two skills:
+This plugin currently contains exactly three skills:
 
 - `team-memory`
 - `idea-shaping`
+- `writing-skills`
 
 Do not add, rename, or remove skills without updating `skills-index.md`, relevant README content, and validation rules.
 
@@ -71,7 +72,7 @@ Validation must fail if:
 - `skills/` is missing.
 - A direct child of `skills/` lacks `SKILL.md`.
 - `skills/plugins` exists.
-- Any direct skill directory other than `team-memory` or `idea-shaping` exists.
+- Any direct skill directory other than `team-memory`, `idea-shaping`, or `writing-skills` exists.
 - A skill frontmatter `name` is missing or does not match its directory.
 - A skill frontmatter `description` is missing or blank.
 - `skills-index.md` omits a current skill or references a missing skill.

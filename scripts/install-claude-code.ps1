@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Source = Join-Path $Root 'skills'
 $Validate = Join-Path $PSScriptRoot 'validate.ps1'
-$ApprovedSkills = @('idea-shaping', 'team-memory')
+$ApprovedSkills = @('idea-shaping', 'team-memory', 'writing-skills')
 
 & $Validate
 

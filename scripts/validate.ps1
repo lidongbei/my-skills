@@ -5,7 +5,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 $Skills = Join-Path $Root 'skills'
 $PluginManifest = Join-Path $Root '.claude-plugin\plugin.json'
 $SkillsIndex = Join-Path $Root 'skills-index.md'
-$AllowedSkills = @('idea-shaping', 'team-memory')
+$AllowedSkills = @('idea-shaping', 'team-memory', 'writing-skills')
 $errors = @()
 
 function Add-ValidationError {

@@ -1,13 +1,13 @@
 param(
   [switch]$WhatIf,
-  [string[]]$Skill = @('idea-shaping', 'team-memory')
+  [string[]]$Skill = @('idea-shaping', 'team-memory', 'writing-skills')
 )
 
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Source = Join-Path $env:USERPROFILE '.claude\skills'
 $Dest = Join-Path $Root 'skills'
-$ApprovedSkills = @('idea-shaping', 'team-memory')
+$ApprovedSkills = @('idea-shaping', 'team-memory', 'writing-skills')
 $Validate = Join-Path $PSScriptRoot 'validate.ps1'
 
 foreach ($skillName in $Skill) {

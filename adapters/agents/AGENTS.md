@@ -24,6 +24,7 @@ Current approved skills:
 
 - `team-memory`
 - `idea-shaping`
+- `writing-skills`
 
 Each skill directory must keep this shape:
 
