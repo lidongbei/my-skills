@@ -1,57 +1,61 @@
 # my-skills
 
-A small personal skills plugin. It provides reusable `SKILL.md` skills that can be installed into Claude Code or copied into other agent runtimes that understand `SKILL.md` directories.
+`my-skills` is a single Claude Code plugin that packages four explicit-invocation agent skills.
 
-Current skills:
+The plugin root is this repository. Its canonical plugin manifest is:
+
+```text
+.claude-plugin/plugin.json
+```
+
+Included skills:
 
 - `coding-workflow`
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`
 
-## Install For Claude Code
+## Use As A Claude Code Plugin
 
-Claude Code loads user-level skills from:
+From the parent directory of this repository, start Claude Code with this plugin directory:
+
+```powershell
+claude --plugin-dir ./my-skills
+```
+
+From inside this repository, use:
+
+```powershell
+claude --plugin-dir .
+```
+
+You can also pass an absolute path:
+
+```powershell
+claude --plugin-dir D:\AI\my-skills
+```
+
+During development, reload changed plugins from inside Claude Code:
 
 ```text
-~/.claude/skills
+/reload-plugins
 ```
 
-On Windows this usually resolves to:
+List loaded plugins:
 
 ```text
-%USERPROFILE%\.claude\skills
+/plugin list
 ```
 
-Preview what will be installed:
+## Use The Skills
 
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
-```
-
-Install all approved skills:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
-```
-
-Install into a custom Claude Code skills directory:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -Target "C:\Users\you\.claude\skills"
-```
-
-The installer validates the plugin first, then replaces the installed copies of the approved skills.
-
-## Use In Claude Code
-
-These built-in skills are user-only skills. They include:
+All built-in skills are Claude Code user-only skills. Their frontmatter includes:
 
 ```yaml
 disable-model-invocation: true
 ```
 
-That means the model should not invoke them automatically. Use them explicitly with slash commands or an explicit instruction.
+This means the model should not invoke them automatically. Invoke them explicitly when you want to use them.
 
 Examples:
 
@@ -82,7 +86,31 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | `idea-shaping` | Shape a product, feature, project, startup, side-project, or internal-tool idea. |
 | `writing-skills` | Create, diagnose, edit, or verify skills with a TDD-style process. |
 
-## Install For Other Agent Runtimes
+## Optional: Sync Skills Into Claude Code User Skills
+
+The preferred Claude Code path is plugin loading with `--plugin-dir`. If you specifically need user-level skill copies under `~/.claude/skills`, use the helper script.
+
+Preview the sync:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
+```
+
+Copy approved skills into `~/.claude/skills`:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
+```
+
+Copy into a custom target directory:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -Target "C:\Users\you\.claude\skills"
+```
+
+This script validates the plugin first, then replaces the installed skill copies. Treat this as a sync/copy workflow, not the primary plugin workflow.
+
+## Use With Other Agent Runtimes
 
 Other tools can use these skills if they support directories shaped like:
 
@@ -140,8 +168,9 @@ my-skills/
 
 Core rules:
 
-- Keep skills under `skills/<skill-name>/SKILL.md`.
+- The repository root is the plugin root.
 - Keep `.claude-plugin/plugin.json` as the canonical plugin manifest.
+- Keep runtime skills under `skills/<skill-name>/SKILL.md`.
 - Keep `skills-index.md`, this README, and validation rules in sync after skill changes.
 - Built-in skills are Claude Code user-only skills with `disable-model-invocation: true`.
 - When creating a future skill, ask whether it should be `user-only` or `model-invocable` before writing frontmatter.
