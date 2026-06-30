@@ -1,15 +1,122 @@
 # my-skills
 
-A single standard agent skills plugin containing four skills: `coding-workflow`, `team-memory`, `idea-shaping`, and `writing-skills`.
+A small personal skills plugin. It provides reusable `SKILL.md` skills that can be installed into Claude Code or copied into other agent runtimes that understand `SKILL.md` directories.
 
-## Layout
+Current skills:
+
+- `coding-workflow`
+- `team-memory`
+- `idea-shaping`
+- `writing-skills`
+
+## Install For Claude Code
+
+Claude Code loads user-level skills from:
+
+```text
+~/.claude/skills
+```
+
+On Windows this usually resolves to:
+
+```text
+%USERPROFILE%\.claude\skills
+```
+
+Preview what will be installed:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
+```
+
+Install all approved skills:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
+```
+
+Install into a custom Claude Code skills directory:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -Target "C:\Users\you\.claude\skills"
+```
+
+The installer validates the plugin first, then replaces the installed copies of the approved skills.
+
+## Use In Claude Code
+
+These built-in skills are user-only skills. They include:
+
+```yaml
+disable-model-invocation: true
+```
+
+That means the model should not invoke them automatically. Use them explicitly with slash commands or an explicit instruction.
+
+Examples:
+
+```text
+/my-skills:coding-workflow implement this feature
+```
+
+```text
+/coding-workflow fix this bug
+```
+
+```text
+/my-skills:writing-skills @docs/experience/example.md this is a failed skill-use experience
+```
+
+```text
+/team-memory remember this as a reusable team convention
+```
+
+If a runtime tool rejects a user-only skill because of `disable-model-invocation: true`, the user invocation is still valid. The agent should read the matching `skills/<skill-name>/SKILL.md` file and follow it directly.
+
+## Skill Summary
+
+| Skill | Use explicitly when you want to... |
+|---|---|
+| `coding-workflow` | Plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
+| `team-memory` | Turn reusable project/team lessons or cross-project habits into durable memory. |
+| `idea-shaping` | Shape a product, feature, project, startup, side-project, or internal-tool idea. |
+| `writing-skills` | Create, diagnose, edit, or verify skills with a TDD-style process. |
+
+## Install For Other Agent Runtimes
+
+Other tools can use these skills if they support directories shaped like:
+
+```text
+<skill-name>/SKILL.md
+```
+
+Copy or symlink selected skill directories from:
+
+```text
+skills/<skill-name>
+```
+
+into the runtime's skill directory.
+
+Common locations:
+
+```text
+~/.agents/skills/<skill-name>
+~/.codex/skills/<skill-name>
+```
+
+For runtime-specific notes, see:
+
+- `adapters/claude-code/README.md`
+- `adapters/agents/AGENTS.md`
+- `adapters/codex/AGENTS.md`
+
+## Repository Layout
 
 ```text
 my-skills/
 ├── .claude-plugin/
-│   └── plugin.json          # canonical plugin manifest
-├── PROJECT_SPEC.md          # rules for maintaining this plugin
-├── skills-index.md          # human-readable skill index
+│   └── plugin.json
 ├── skills/
 │   ├── coding-workflow/
 │   │   └── SKILL.md
@@ -18,71 +125,39 @@ my-skills/
 │   ├── team-memory/
 │   │   ├── SKILL.md
 │   │   └── evals/
-│   │       └── evals.json
 │   └── writing-skills/
 │       ├── SKILL.md
-│       ├── anthropic-best-practices.md
-│       ├── graphviz-conventions.dot
-│       ├── persuasion-principles.md
-│       ├── testing-skills-with-subagents.md
-│       └── examples/
-│           └── CLAUDE_MD_TESTING.md
-├── adapters/                # runtime-specific install notes
-└── scripts/                 # validation and sync helpers
+│       └── supporting files...
+├── adapters/
+├── scripts/
+├── PROJECT_SPEC.md
+└── skills-index.md
 ```
 
-## Included Skills
+## Maintain This Plugin
 
-All built-in skills are Claude Code user-only skills: they require explicit user invocation and include `disable-model-invocation: true` so the model cannot invoke them on its own. For future skills, choose `user-only` or `model-invocable` during skill creation.
-
-`writing-skills` uses agent-mode planning: it clarifies with the user interactively and outputs modification plans directly, without Claude Code plan mode.
-
-- `coding-workflow` — runs the approved coding workflow only when explicitly invoked.
-- `team-memory` — curates reusable memory into project/team memory or cross-project habits only when explicitly invoked.
-- `idea-shaping` — shapes product, feature, project, startup, side-project, or internal-tool ideas when explicitly invoked.
-- `writing-skills` — creates, edits, and verifies skills with a TDD-style workflow only when explicitly invoked.
-
-## Canonical Rules
-
-Use `PROJECT_SPEC.md` as the source of truth for adding or changing skills.
+`PROJECT_SPEC.md` is the source of truth for adding or changing skills.
 
 Core rules:
 
-- The repository root is the plugin root.
-- `.claude-plugin/plugin.json` is the canonical plugin manifest.
-- Skills live directly under `skills/<skill-name>/SKILL.md`.
-- This plugin currently contains exactly `coding-workflow`, `team-memory`, `idea-shaping`, and `writing-skills`.
-- The built-in skills are Claude Code user-only skills with `disable-model-invocation: true`; future skills must ask the user to choose `user-only` or `model-invocable` during creation.
-- Skill descriptions must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
+- Keep skills under `skills/<skill-name>/SKILL.md`.
+- Keep `.claude-plugin/plugin.json` as the canonical plugin manifest.
+- Keep `skills-index.md`, this README, and validation rules in sync after skill changes.
+- Built-in skills are Claude Code user-only skills with `disable-model-invocation: true`.
+- When creating a future skill, ask whether it should be `user-only` or `model-invocable` before writing frontmatter.
 
-## Validation
-
-Run:
+Validate the plugin:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate.ps1
 ```
 
-## Claude Code Usage
+## Sync Notes
 
-Claude Code user-level skills live under:
+This repository is the source project. Avoid editing installed copies under `~/.claude/skills` independently unless you intentionally sync them back.
 
-```text
-~/.claude/skills
-```
-
-Install this plugin's skills with:
+If you intentionally changed installed Claude Code skills and want to sync them into this repository, inspect and use:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/sync-from-claude.ps1
 ```
-
-Preview installation with:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
-```
-
-## Codex And Shared Agent Usage
-
-Tools that consume `SKILL.md` directories can copy or symlink selected directories from `skills/` into their runtime skill directories. See `adapters/` for runtime-specific notes.
