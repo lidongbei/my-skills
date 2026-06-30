@@ -55,9 +55,11 @@ Emphasis: bugs → root cause; features → motivation/constraints; refactors �
 
 Fix gaps, investigate, or ask. Do not implement yet.
 
-### 3. Save, Commit, Choose Mode
+### 3. Save, Commit, Ask User To Choose Mode
 
-After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then choose mode.
+After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then ask the user to choose the execution mode before implementation unless the user has already explicitly specified it.
+
+Present these modes to the user and wait for their choice:
 
 | Mode | Use when |
 |---|---|
@@ -101,6 +103,6 @@ Say “not validated” or “validation failed” when true. Do not claim compl
 | Guessed cause as fact | Mark uncertainty or investigate |
 | Heavy ceremony | Keep lightweight |
 | Testing every tiny edit | Use risk-sized validation |
-| Forcing subagents | Choose mode after approval |
+| Choosing execution mode silently | Ask the user to choose mode after approval unless already specified |
 | Saving drafts | Save only after approval |
 | Completion without evidence | Report checks and results |
