@@ -18,6 +18,9 @@ This repository is one standard agent skills plugin.
 - Do not add nested plugin directories under `skills/`.
 - Do not rewrite skill behavior during structural refactors.
 - Preserve skill frontmatter fields unless the user explicitly approves a behavior change.
+- Current built-in skills must remain Claude Code user-only with `disable-model-invocation: true`.
+- When using `writing-skills`, do not enter Claude Code plan mode; clarify interactively and output the modification plan in agent mode.
+- When creating a future skill, ask whether it should be `user-only` or `model-invocable`; do not choose a default unless the user already made it explicit.
 - Skill descriptions must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
 - Keep `skills-index.md`, `README.md`, and validation rules in sync after skill changes.
 - Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate.ps1` before claiming the plugin shape is valid.

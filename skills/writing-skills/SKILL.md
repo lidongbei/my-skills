@@ -1,6 +1,7 @@
 ---
 name: writing-skills
 description: Use only when the user explicitly invokes /my-skills:writing-skills, invokes /writing-skills, or explicitly instructs the agent to use writing-skills.
+disable-model-invocation: true
 ---
 
 # Writing Skills
@@ -22,6 +23,7 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 ## Hard Boundaries
 
 - Trigger only when the user explicitly invokes `/my-skills:writing-skills`, invokes `/writing-skills`, or explicitly instructs the agent to use `writing-skills`.
+- Do not use Claude Code plan mode (`EnterPlanMode` or `ExitPlanMode`) while using this skill. Ask targeted clarification questions interactively, then output the modification plan directly in agent mode.
 - Do not auto-trigger for ordinary skill file mentions, `SKILL.md` reads, documentation edits, eval edits, trigger discussions, or skill-related tasks unless the user explicitly requests this skill.
 - Diagnose before modifying an existing skill. Do not edit from a failure report until you classify whether the problem is skill mismatch, missing user input, agent execution deviation, or an out-of-scope task.
 - Do not assume every failed skill run means the skill is wrong. If evidence is thin, ask for the original request, expected behavior, actual behavior, skipped step, retries, and human intervention.
@@ -60,12 +62,26 @@ For a new skill, do not start with a polished `SKILL.md`. Build the minimum reli
 
 1. Name the specific user/role and repeated situation.
 2. State the current workaround and cost.
-3. Write trigger-only frontmatter description candidates.
-4. Define hard boundaries and explicit non-goals.
-5. Define the required workflow and the steps agents must not skip.
-6. Choose the guidance form from the observed failure type: prohibition for discipline failures, recipe/contract for wrong-shaped output, required field for omitted elements, conditional rule for conditional behavior.
-7. Create RED pressure scenarios before writing the final guidance.
-8. Draft the skill to address those scenarios, then verify with GREEN/REFACTOR runs.
+3. Ask the user to choose the invocation mode before drafting frontmatter:
+   - `user-only`: add `disable-model-invocation: true`; only the user can invoke the skill explicitly, and the model cannot invoke it on its own.
+   - `model-invocable`: do not add `disable-model-invocation`; the trigger-only `description` still controls when the skill should be used.
+   Do not choose a default unless the user already made the choice explicit.
+4. Write trigger-only frontmatter description candidates.
+5. Define hard boundaries and explicit non-goals.
+6. Define the required workflow and the steps agents must not skip.
+7. Choose the guidance form from the observed failure type: prohibition for discipline failures, recipe/contract for wrong-shaped output, required field for omitted elements, conditional rule for conditional behavior.
+8. Create RED pressure scenarios before writing the final guidance.
+9. Draft the skill to address those scenarios, then verify with GREEN/REFACTOR runs.
+
+## Agent-Mode Modification Planning
+
+For modification requests, use agent-mode planning instead of Claude Code plan mode:
+
+1. Diagnose the failure layer.
+2. Ask the minimum necessary clarification questions.
+3. State diagnosis, evidence, decision, and minimum change.
+4. Output the modification plan directly in chat.
+5. Wait for user approval before editing.
 
 ## Existing Skill Failure Diagnosis
 
@@ -121,6 +137,7 @@ After any skill change, review whether the change actually improves adaptation:
 When using this skill, final output must report:
 
 - Work type: new skill, existing skill diagnosis, review, verification, or non-trigger.
+- Invocation mode / user-only decision: whether it was asked, what the user chose, and whether the frontmatter matches that choice.
 - Diagnosis and evidence, if an existing skill failed.
 - Files created or changed.
 - RED/GREEN/REFACTOR evidence or why more context is required.
@@ -740,6 +757,7 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 
 **GREEN Phase - Write Minimal Skill:**
 - [ ] Name uses only letters, numbers, hyphens (no parentheses/special chars)
+- [ ] User was asked to choose `user-only` or `model-invocable`; if `user-only`, frontmatter includes `disable-model-invocation: true`; if `model-invocable`, that field is omitted by user choice
 - [ ] YAML frontmatter with required `name` and `description` fields (max 1024 chars; see [spec](https://agentskills.io/specification))
 - [ ] Description starts with "Use when..." and includes specific triggers/symptoms
 - [ ] Description written in third person

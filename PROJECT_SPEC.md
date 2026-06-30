@@ -49,6 +49,9 @@ Rules:
 - `<skill-name>` must be kebab-case.
 - Frontmatter `name` must match the skill directory name.
 - `description` must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
+- Current built-in skills use Claude Code user-only mode with `disable-model-invocation: true`.
+- `writing-skills` uses agent-mode planning: do not use `EnterPlanMode` or `ExitPlanMode`; ask targeted clarification questions and output the plan directly in chat.
+- When creating a future skill, ask the user to choose `user-only` or `model-invocable`; add `disable-model-invocation: true` only when the user chooses `user-only`.
 - Additional frontmatter keys are allowed when required by a runtime.
 - Skill-specific evals or fixtures stay inside that skill directory.
 - Do not rewrite a skill's behavior during structural refactors.
@@ -81,9 +84,10 @@ Validation must fail if:
 ## Adding A Future Skill
 
 1. Create `skills/<new-skill>/SKILL.md`.
-2. Add frontmatter with matching `name` and explicit-invocation `description`.
-3. Place skill-specific evals under `skills/<new-skill>/evals/` if needed.
-4. Update `skills-index.md`.
-5. Update `README.md` if the public skill list changes.
-6. Update `scripts/validate.ps1` allowed skill names if the new skill is approved.
-7. Run validation.
+2. Ask the user to choose `user-only` or `model-invocable` invocation mode.
+3. Add frontmatter with matching `name` and explicit-invocation `description`; include `disable-model-invocation: true` only when the user chooses `user-only`.
+4. Place skill-specific evals under `skills/<new-skill>/evals/` if needed.
+5. Update `skills-index.md`.
+6. Update `README.md` if the public skill list changes.
+7. Update `scripts/validate.ps1` allowed skill names if the new skill is approved.
+8. Run validation.

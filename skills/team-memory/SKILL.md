@@ -1,6 +1,7 @@
 ---
 name: team-memory
 description: Use only when the user explicitly invokes /my-skills:team-memory, invokes /team-memory, or explicitly instructs the agent to use team-memory.
+disable-model-invocation: true
 ---
 
 # Team Memory

@@ -33,6 +33,10 @@ my-skills/
 
 ## Included Skills
 
+All built-in skills are Claude Code user-only skills: they require explicit user invocation and include `disable-model-invocation: true` so the model cannot invoke them on its own. For future skills, choose `user-only` or `model-invocable` during skill creation.
+
+`writing-skills` uses agent-mode planning: it clarifies with the user interactively and outputs modification plans directly, without Claude Code plan mode.
+
 - `coding-workflow` — runs the approved coding workflow only when explicitly invoked.
 - `team-memory` — curates reusable memory into project/team memory or cross-project habits only when explicitly invoked.
 - `idea-shaping` — shapes product, feature, project, startup, side-project, or internal-tool ideas when explicitly invoked.
@@ -48,6 +52,7 @@ Core rules:
 - `.claude-plugin/plugin.json` is the canonical plugin manifest.
 - Skills live directly under `skills/<skill-name>/SKILL.md`.
 - This plugin currently contains exactly `coding-workflow`, `team-memory`, `idea-shaping`, and `writing-skills`.
+- The built-in skills are Claude Code user-only skills with `disable-model-invocation: true`; future skills must ask the user to choose `user-only` or `model-invocable` during creation.
 - Skill descriptions must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
 
 ## Validation

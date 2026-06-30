@@ -1,6 +1,7 @@
 ---
 name: coding-workflow
 description: Use only when the user explicitly invokes /my-skills:coding-workflow, invokes /coding-workflow, or explicitly instructs the agent to use coding-workflow.
+disable-model-invocation: true
 ---
 
 # Coding Workflow
