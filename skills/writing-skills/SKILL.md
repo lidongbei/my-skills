@@ -73,6 +73,12 @@ For a new skill, do not start with a polished `SKILL.md`. Build the minimum reli
 8. Create RED pressure scenarios before writing the final guidance.
 9. Draft the skill to address those scenarios, then verify with GREEN/REFACTOR runs.
 
+## User-Only Skill Invocation Rule
+
+`disable-model-invocation: true` means the model must not invoke the skill on its own through the runtime `Skill` tool. It does not make an explicit user slash-command invocation invalid.
+
+When the user explicitly invokes a user-only skill and the runtime `Skill` tool rejects it because of `disable-model-invocation: true`, treat this as a tool-level loading limitation. Read the corresponding `skills/<skill-name>/SKILL.md` directly and follow it instead of retrying the tool or reporting that the skill cannot be used.
+
 ## Agent-Mode Modification Planning
 
 For modification requests, use agent-mode planning instead of Claude Code plan mode:

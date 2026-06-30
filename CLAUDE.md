@@ -19,6 +19,7 @@ This repository is one standard agent skills plugin.
 - Do not rewrite skill behavior during structural refactors.
 - Preserve skill frontmatter fields unless the user explicitly approves a behavior change.
 - Current built-in skills must remain Claude Code user-only with `disable-model-invocation: true`.
+- If the user explicitly invokes a user-only skill and the runtime `Skill` tool rejects it because of `disable-model-invocation: true`, treat the user invocation as valid; read the corresponding `skills/<skill-name>/SKILL.md` directly and follow it instead of retrying the tool or saying the skill cannot be used.
 - When using `writing-skills`, do not enter Claude Code plan mode; clarify interactively and output the modification plan in agent mode.
 - When creating a future skill, ask whether it should be `user-only` or `model-invocable`; do not choose a default unless the user already made it explicit.
 - Skill descriptions must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.

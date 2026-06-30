@@ -50,6 +50,8 @@ Rules:
 - Frontmatter `name` must match the skill directory name.
 - `description` must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
 - Current built-in skills use Claude Code user-only mode with `disable-model-invocation: true`.
+- User-only means the model must not invoke the skill on its own through the runtime `Skill` tool; a user slash-command invocation is still valid.
+- If a user explicitly invokes a user-only skill and the runtime `Skill` tool rejects it because of `disable-model-invocation: true`, the agent should read `skills/<skill-name>/SKILL.md` directly and follow it instead of treating the user invocation as invalid.
 - `writing-skills` uses agent-mode planning: do not use `EnterPlanMode` or `ExitPlanMode`; ask targeted clarification questions and output the plan directly in chat.
 - When creating a future skill, ask the user to choose `user-only` or `model-invocable`; add `disable-model-invocation: true` only when the user chooses `user-only`.
 - Additional frontmatter keys are allowed when required by a runtime.
