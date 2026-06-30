@@ -31,6 +31,7 @@ into one of:
 
 Current approved skills:
 
+- `coding-workflow`
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`

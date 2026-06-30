@@ -1,6 +1,6 @@
 # my-skills
 
-A single standard agent skills plugin containing three skills: `team-memory`, `idea-shaping`, and `writing-skills`.
+A single standard agent skills plugin containing four skills: `coding-workflow`, `team-memory`, `idea-shaping`, and `writing-skills`.
 
 ## Layout
 
@@ -11,6 +11,8 @@ my-skills/
 ├── PROJECT_SPEC.md          # rules for maintaining this plugin
 ├── skills-index.md          # human-readable skill index
 ├── skills/
+│   ├── coding-workflow/
+│   │   └── SKILL.md
 │   ├── idea-shaping/
 │   │   └── SKILL.md
 │   ├── team-memory/
@@ -31,9 +33,10 @@ my-skills/
 
 ## Included Skills
 
-- `team-memory` — curates reusable memory into project/team memory or cross-project habits.
+- `coding-workflow` — runs the approved coding workflow only when explicitly invoked.
+- `team-memory` — curates reusable memory into project/team memory or cross-project habits only when explicitly invoked.
 - `idea-shaping` — shapes product, feature, project, startup, side-project, or internal-tool ideas when explicitly invoked.
-- `writing-skills` — creates, edits, and verifies skills with a TDD-style workflow before deployment.
+- `writing-skills` — creates, edits, and verifies skills with a TDD-style workflow only when explicitly invoked.
 
 ## Canonical Rules
 
@@ -44,7 +47,8 @@ Core rules:
 - The repository root is the plugin root.
 - `.claude-plugin/plugin.json` is the canonical plugin manifest.
 - Skills live directly under `skills/<skill-name>/SKILL.md`.
-- This plugin currently contains exactly `team-memory`, `idea-shaping`, and `writing-skills`.
+- This plugin currently contains exactly `coding-workflow`, `team-memory`, `idea-shaping`, and `writing-skills`.
+- Skill descriptions must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
 
 ## Validation
 

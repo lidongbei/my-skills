@@ -3,31 +3,31 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Create a new skill for preventing agents from skipping deployment checks. It's simple, just write the SKILL.md now.",
+      "prompt": "/my-skills:writing-skills Create a new skill for preventing agents from skipping deployment checks. It's simple, just write the SKILL.md now.",
       "expected_output": "Does not immediately write the final skill. Establishes RED pressure scenarios first, defines target user/use case, trigger-only description, hard boundaries, required workflow, no-skip conditions, and verification criteria before drafting.",
       "files": []
     },
     {
       "id": 2,
-      "prompt": "The idea-shaping skill failed yesterday: the agent skipped premise confirmation and wrote a document. Update the skill so this never happens again.",
+      "prompt": "Use writing-skills: The idea-shaping skill failed yesterday: the agent skipped premise confirmation and wrote a document. Update the skill so this never happens again.",
       "expected_output": "Collects or reconstructs a failure report, classifies the failure layer before editing, states diagnosis/evidence/decision/minimum change, and only modifies the skill if evidence shows a skill mismatch rather than one-off agent deviation or missing context.",
       "files": ["skills/idea-shaping/SKILL.md"]
     },
     {
       "id": 3,
-      "prompt": "A user asked a vague question and the team-memory skill didn't save anything. Make team-memory more aggressive so it always writes memory entries.",
+      "prompt": "/my-skills:writing-skills A user asked a vague question and the team-memory skill didn't save anything. Make team-memory more aggressive so it always writes memory entries.",
       "expected_output": "Identifies this may be a user-input gap or correct boundary behavior, does not blindly broaden the skill, asks for evidence or reports DIAGNOSED_NO_CHANGE if the existing boundaries are working as intended.",
       "files": ["skills/team-memory/SKILL.md"]
     },
     {
       "id": 4,
-      "prompt": "Improve a skill description by saying: Use when editing skills; first run RED scenarios, then write the skill, then verify GREEN and REFACTOR.",
+      "prompt": "Use writing-skills to improve a skill description by saying: Use when editing skills; first run RED scenarios, then write the skill, then verify GREEN and REFACTOR.",
       "expected_output": "Rejects workflow-summary frontmatter. Keeps description trigger-focused and moves workflow details into the skill body so agents do not follow the description as a shortcut.",
       "files": ["skills/writing-skills/SKILL.md"]
     },
     {
       "id": 5,
-      "prompt": "An agent triggers a skill but still skips its required validation because the task looks tiny. Patch the skill.",
+      "prompt": "/my-skills:writing-skills An agent triggers a skill but still skips its required validation because the task looks tiny. Patch the skill.",
       "expected_output": "Treats this as a workflow/discipline failure, adds no-skip gates or rationalization counters tied to the observed skipped validation, and adds verification or eval coverage that proves tiny tasks still follow the required path.",
       "files": []
     },
@@ -36,6 +36,18 @@
       "prompt": "Update README.md to fix the install command typo. This is not about any skill behavior, triggers, evals, or deployment readiness.",
       "expected_output": "Does not invoke the full writing-skills workflow. Treats it as an ordinary documentation edit unless the typo changes skill behavior or plugin deployment rules.",
       "files": ["README.md"]
+    },
+    {
+      "id": 7,
+      "prompt": "Review this SKILL.md and make its trigger wording clearer.",
+      "expected_output": "Should not trigger writing-skills because ordinary SKILL.md mentions and trigger discussions are not explicit writing-skills invocation.",
+      "files": ["skills/writing-skills/SKILL.md"]
+    },
+    {
+      "id": 8,
+      "prompt": "Create a skill for preventing agents from skipping deployment checks.",
+      "expected_output": "Should not trigger writing-skills because skill-authoring intent alone is not explicit writing-skills invocation.",
+      "files": []
     }
   ]
 }

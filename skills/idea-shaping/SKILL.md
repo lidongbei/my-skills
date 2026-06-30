@@ -1,6 +1,6 @@
 ---
 name: idea-shaping
-description: Use only when the user explicitly invokes /idea-shaping to shape a product, feature, project, startup, side-project, or internal-tool idea before implementation.
+description: Use only when the user explicitly invokes /my-skills:idea-shaping, invokes /idea-shaping, or explicitly instructs the agent to use idea-shaping.
 argument-hint: "[idea or context]"
 arguments:
   - idea
@@ -27,8 +27,8 @@ Use `$idea` or `$ARGUMENTS` as the initial idea/context. If the argument is empt
 
 ## Hard Boundaries
 
-- Trigger only when the user explicitly invokes `/idea-shaping`.
-- Do not auto-trigger for ordinary feature implementation requests.
+- Trigger only when the user explicitly invokes `/my-skills:idea-shaping`, invokes `/idea-shaping`, or explicitly instructs the agent to use `idea-shaping`.
+- Do not auto-trigger for ordinary idea, planning, product, or feature implementation requests.
 - Do not write code, scaffold files, or modify the project during the questioning/design phase.
 - Do not save the design document automatically.
 - First produce the design document in chat.

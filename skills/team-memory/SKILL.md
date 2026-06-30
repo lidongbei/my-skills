@@ -1,11 +1,17 @@
 ---
 name: team-memory
-description: Use when the user invokes /team-memory or wants to curate reusable memory into the right long-term location. Project/team knowledge goes to docs/memory; cross-project human habits go to ~/.claude/HABIT.md. Keep CLAUDE.md as lightweight pointers only. For HABIT.md: max 30 habits, merge duplicates, ask before resolving conflicts, and propose cleanup instead of appending past the limit. Trigger phrases include “项目级复用”, “沉淀到仓库 memory”, “同步到 docs/memory”, “记住这个使用习惯”, “多个项目复用”, and “统一到 HABIT.md”.
+description: Use only when the user explicitly invokes /my-skills:team-memory, invokes /team-memory, or explicitly instructs the agent to use team-memory.
 ---
 
 # Team Memory
 
 Curate important memory into the right durable location without bloating always-loaded context.
+
+## Hard Boundaries
+
+- Trigger only when the user explicitly invokes `/my-skills:team-memory`, invokes `/team-memory`, or explicitly instructs the agent to use `team-memory`.
+- Do not auto-trigger from memory-like phrases such as “项目级复用”, “沉淀到仓库 memory”, “同步到 docs/memory”, “记住这个使用习惯”, “多个项目复用”, or “统一到 HABIT.md”.
+- Do not use this skill for temporary reminders, current-session todos, ordinary documentation edits, or implementation plans.
 
 This skill has two tracks:
 
@@ -91,9 +97,9 @@ If the classification is unclear, ask one focused question:
 
 > 这是只对当前仓库有效的项目知识，还是你希望多个项目都复用的个人习惯？
 
-## When to Use
+## Invocation Scope
 
-Use this skill when the user asks to:
+After explicit invocation, use this skill when the user asks to:
 
 - Promote local Claude memory into team/shared project documentation.
 - Persist an important project analysis, decision, workflow, pitfall, or convention.

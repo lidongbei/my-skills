@@ -1,6 +1,6 @@
 ---
 name: writing-skills
-description: Use when creating, editing, reviewing, or verifying agent skills; diagnosing skipped skill workflows, unclear triggers, weak hard boundaries, skill mismatch reports, eval coverage, or deployment readiness before changing SKILL.md files
+description: Use only when the user explicitly invokes /my-skills:writing-skills, invokes /writing-skills, or explicitly instructs the agent to use writing-skills.
 ---
 
 # Writing Skills
@@ -21,6 +21,8 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 
 ## Hard Boundaries
 
+- Trigger only when the user explicitly invokes `/my-skills:writing-skills`, invokes `/writing-skills`, or explicitly instructs the agent to use `writing-skills`.
+- Do not auto-trigger for ordinary skill file mentions, `SKILL.md` reads, documentation edits, eval edits, trigger discussions, or skill-related tasks unless the user explicitly requests this skill.
 - Diagnose before modifying an existing skill. Do not edit from a failure report until you classify whether the problem is skill mismatch, missing user input, agent execution deviation, or an out-of-scope task.
 - Do not assume every failed skill run means the skill is wrong. If evidence is thin, ask for the original request, expected behavior, actual behavior, skipped step, retries, and human intervention.
 - Do not skip RED-GREEN-REFACTOR because the change is "just documentation", "small", or "obvious".
@@ -42,7 +44,7 @@ Watch for these symptoms:
 
 ## Work Classification
 
-Classify the request before writing or editing:
+After explicit invocation, classify the request before writing or editing:
 
 | Request type | Required response |
 |---|---|
