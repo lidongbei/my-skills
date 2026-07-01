@@ -31,6 +31,7 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 - Do not put workflow summaries in frontmatter `description`; keep descriptions trigger-only so agents read the full skill body.
 - Do not add broad confirmation gates to force safety. Human intervention must be tied to explicit rules; otherwise design the workflow so the agent continues correctly.
 - Do not make a skill longer as the default fix. Prefer the smallest change that blocks the observed failure without increasing over-triggering or workflow burden.
+- When creating or modifying skills, write portable tool actions with `using-tool` aliases: `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, and `check`. Do not invent new aliases or write ambiguous tool-action instructions. If a needed action does not clearly fit an existing alias, use `ask` to discuss the intent before drafting guidance.
 
 ## Core Failure to Avoid
 
@@ -68,7 +69,7 @@ For a new skill, do not start with a polished `SKILL.md`. Build the minimum reli
    Do not choose a default unless the user already made the choice explicit.
 4. Write trigger-only frontmatter description candidates.
 5. Define hard boundaries and explicit non-goals.
-6. Define the required workflow and the steps agents must not skip.
+6. Define the required workflow and the steps agents must not skip. Write tool-action instructions with `using-tool` aliases: `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, and `check`. If a needed action does not clearly fit one of these aliases, stop and use `ask` to discuss the intended action before drafting guidance.
 7. Choose the guidance form from the observed failure type: prohibition for discipline failures, recipe/contract for wrong-shaped output, required field for omitted elements, conditional rule for conditional behavior.
 8. Create RED pressure scenarios before writing the final guidance.
 9. Draft the skill to address those scenarios, then verify with GREEN/REFACTOR runs.
@@ -771,6 +772,7 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 - [ ] Clear overview with core principle
 - [ ] Address specific baseline failures identified in RED
 - [ ] Guidance form matches the failure type (see Match the Form to the Failure)
+- [ ] Tool-action instructions use backticked aliases from `using-tool`; unclear new actions were discussed with `ask` before adding guidance
 - [ ] For behavior-shaping guidance: wording micro-tested against a no-guidance control (5+ reps, every flagged match read manually) — N/A for pure reference skills
 - [ ] Code inline OR link to separate file
 - [ ] One excellent example (not multi-language)
