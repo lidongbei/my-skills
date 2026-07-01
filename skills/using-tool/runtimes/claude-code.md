@@ -35,37 +35,152 @@ Use `AskUserQuestion` when the user must choose among concrete options. Typical 
 }
 ```
 
-For a simple clarification without structured choices, ask directly in chat.
+For a simple clarification without structured choices, ask directly in chat:
+
+```markdown
+I need one missing fact before continuing: what was the actual agent behavior?
+```
 
 ### `read` / `find`
 
-- `Read`: known file, notebook, image, or PDF. Use `offset`/`limit` for large files.
-- `Glob`: path discovery such as `skills/**/*.md`.
-- `Grep`: content search with `pattern`, `path`, optional `glob`, and `output_mode`.
-- `WebFetch`: read a URL when web access is needed.
+Use `Read` for a known file or resource. Typical shape:
+
+```json
+{
+  "file_path": "D:\\AI\\my-skills\\skills\\using-tool\\SKILL.md",
+  "offset": 0,
+  "limit": 2000
+}
+```
+
+Use `Glob` for path discovery. Typical shape:
+
+```json
+{
+  "path": "D:\\AI\\my-skills",
+  "pattern": "skills/using-tool/runtimes/*.md"
+}
+```
+
+Use `Grep` for content search. Typical shape:
+
+```json
+{
+  "path": "D:\\AI\\my-skills",
+  "pattern": "AskUserQuestion|TaskCreate|Workflow",
+  "glob": "*.md",
+  "output_mode": "content",
+  "head_limit": 50
+}
+```
+
+Use `WebFetch` for URL reading when web access is needed. Do not use shell `cat`, `grep`, or `find` when the dedicated tools fit.
 
 ### `edit`
 
-- Use `Edit` for exact replacements after reading the file.
-- Use `Write` for new files or full replacements of files already read.
-- `Edit.old_string` must match exactly and be unique unless `replace_all` is intentional.
-- Use `NotebookEdit` for notebooks.
+Use `Edit` for exact replacements after reading the file. Typical shape:
+
+```json
+{
+  "file_path": "D:\\AI\\my-skills\\skills\\using-tool\\runtimes\\claude-code.md",
+  "old_string": "exact text already read from the file",
+  "new_string": "replacement text",
+  "replace_all": false
+}
+```
+
+Use `Write` for a new file or a full replacement of a file already read. Typical shape:
+
+```json
+{
+  "file_path": "D:\\AI\\my-skills\\docs\\plans\\example.md",
+  "content": "# Plan\n\n..."
+}
+```
+
+If a source instruction says `apply_patch`, preserve the edit intent and use `Edit`/`Write` unless applying a patch through an available command is the safest option. Do not copy another runtime's patch format as if it were a Claude Code tool call.
 
 ### `run`
 
-Use `Bash` for commands, tests, builds, and validation. Include a clear `description`; set `timeout` when commands may take time. Prefer dedicated file/search tools over shell for reading or searching.
+Use `Bash` for commands, tests, builds, and validation. Typical shape:
+
+```json
+{
+  "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate.ps1",
+  "description": "Validate plugin shape",
+  "timeout": 120000,
+  "run_in_background": false,
+  "dangerouslyDisableSandbox": false
+}
+```
+
+Prefer dedicated file/search tools over shell when the intent is only to read or search. Use `Bash` when executing a command is the actual action.
 
 ### `todo`
 
-Use task tools only when tracking helps the work. Create/update tasks for multi-step changes; do not add overhead for a single obvious action.
+Use task tools only when tracking helps multi-step work. Typical flow:
+
+```json
+{
+  "title": "Update runtime examples",
+  "description": "Add explicit usage shapes for each alias.",
+  "status": "pending"
+}
+```
+
+Then update as work progresses:
+
+```json
+{
+  "task_id": "<task id from TaskCreate>",
+  "status": "in_progress"
+}
+```
+
+For a single obvious edit, skip task tools and state the work directly.
 
 ### `agent`
 
-Use `Agent` for independent exploration, review, or delegated work. Use `Workflow` only when the user explicitly requests multi-agent orchestration or another loaded instruction allows it.
+Use `Agent` for independent exploration, review, or delegated work. Typical shape:
+
+```json
+{
+  "subagent_type": "Explore",
+  "description": "Review runtime examples",
+  "prompt": "Read the using-tool runtime files and identify missing alias usage examples. Return only gaps and suggested fixes.",
+  "isolation": "worktree",
+  "run_in_background": false
+}
+```
+
+Use `Workflow` only when the user explicitly opts into multi-agent orchestration, for example by asking to “use a workflow”, “fan out agents”, or using the session's workflow opt-in keyword. Do not translate a generic `agent` instruction into `Workflow` by default.
 
 ### `check`
 
-Run the relevant command, inspect the result, review the diff, or use verification/review skills. Do not claim validation without evidence.
+Use concrete evidence: command output, inspected files, reviewed diffs, or verifier/review skills. Typical validation command:
+
+```json
+{
+  "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate.ps1",
+  "description": "Validate plugin shape after changes",
+  "timeout": 120000,
+  "run_in_background": false,
+  "dangerouslyDisableSandbox": false
+}
+```
+
+Typical inspection search:
+
+```json
+{
+  "path": "D:\\AI\\my-skills\\skills\\using-tool\\runtimes",
+  "pattern": "Typical shape|Source instruction|AskUserQuestion",
+  "glob": "*.md",
+  "output_mode": "content"
+}
+```
+
+Do not claim validation without evidence. If a check was skipped, say it was skipped.
 
 ## Claude Code Boundaries
 
