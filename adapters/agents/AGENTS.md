@@ -26,6 +26,7 @@ Current approved skills:
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`
+- `using-tool`
 
 Each skill directory must keep this shape:
 
@@ -34,3 +35,5 @@ Each skill directory must keep this shape:
 ```
 
 If a tool does not support automatic skill discovery, point it to `skills-index.md` or the relevant `skills/<skill-name>/SKILL.md` manually.
+
+Before using any skill from this plugin, load `using-tool`, then load the runtime mapping file that matches the current agent tool. The runtime file maps portable tool-action aliases such as `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, and `check` to that runtime's actual tools or interaction patterns.

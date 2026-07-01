@@ -55,7 +55,33 @@ Emphasis: bugs → root cause; features → motivation/constraints; refactors �
 
 Fix gaps, investigate, or ask. Do not implement yet.
 
-### 3. Save, Commit, Ask User To Choose Mode
+### 3. Decision Review
+
+After the user approves the plan direction, scan the plan for open questions that affect implementation choices.
+
+Classify each decision point:
+
+| Class | Criteria |
+|---|---|
+| Agent-recommended | Low-risk, reversible, technical detail with clear best practice; state the choice and proceed unless the user objects |
+| Human decision required | Scope change, irreversible action, tradeoff with no clear winner, user-preference-dependent, or needs business context |
+
+Present Human-required items one at a time. Wait for an answer before moving to the next. Do not batch multiple questions into one message.
+
+For each Human-required item:
+
+```markdown
+Decision: <what needs to be decided>
+Impact:   <how it affects implementation>
+Options:  <concrete choices if applicable>
+My lean:  <Agent recommendation if any>
+```
+
+If there are no Human-required items, state that explicitly and continue.
+
+Do not save, commit, or ask for execution mode until all Human-required decisions are resolved.
+
+### 4. Save, Commit, Ask User To Choose Mode
 
 After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then ask the user to choose the execution mode before implementation unless the user has already explicitly specified it.
 
@@ -69,7 +95,7 @@ Present these modes to the user and wait for their choice:
 
 Subagents are optional.
 
-### 4. Risk-Sized Loops
+### 5. Risk-Sized Loops
 
 A step is small enough to identify responsibility and large enough to deserve validation.
 
@@ -81,7 +107,7 @@ A step is small enough to identify responsibility and large enough to deserve va
 
 Use narrow validation first when full validation is expensive. Before completion claims, task switches, or implementation commits, validate strongly enough to support the claim.
 
-### 5. Evidence Before Completion Claims
+### 6. Evidence Before Completion Claims
 
 Final reports must include:
 
@@ -104,5 +130,5 @@ Say “not validated” or “validation failed” when true. Do not claim compl
 | Heavy ceremony | Keep lightweight |
 | Testing every tiny edit | Use risk-sized validation |
 | Choosing execution mode silently | Ask the user to choose mode after approval unless already specified |
-| Saving drafts | Save only after approval |
+| Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
 | Completion without evidence | Report checks and results |
