@@ -57,15 +57,19 @@ Fix gaps, investigate, or ask. Do not implement yet.
 
 ### 3. Mandatory Plan Response Gate
 
-After `Plan Conclusion` and `Self-Review`, stop and `ask` the user to choose exactly one response path before saving, committing, choosing execution mode, or editing files.
+After `Plan Conclusion` and `Self-Review`, stop and use using-tool's `ask` action to make the user choose exactly one response path before saving, committing, choosing execution mode, or editing files.
 
-Present these options in this order and wait:
+The `ask` prompt must be:
+
+> 请选择下一步（必须明确选择其中一项）：
+
+Present these Chinese options in this order without changing their existing semantics:
 
 | Option | Meaning | Next action |
 |---|---|---|
-| 1. Confirm recommended plan | The user accepts the agent's recommended plan direction. | Re-review the plan under the accepted recommendation: confirm each decision is safely covered by the recommendation; ask any unresolved Human-required decision one at a time. |
-| 2. Confirm questions one by one | The user wants to resolve open questions or decisions individually. | Ask the first unresolved Human-required question, wait, continue one at a time, then update and re-review the plan. |
-| 3. Modify the plan | The user wants changes before approval. | Ask for the requested changes, revise `Plan Conclusion` and `Self-Review`, then return to this gate. |
+| 1. 按推荐确认方案 | 用户接受 agent 推荐的计划方向。 | 按推荐已被接受的前提再次审查计划：确认每个决策是否可由推荐安全覆盖；任何未解决的 Human-required decision 仍必须逐个询问。 |
+| 2. 逐个确认问题 | 用户希望逐个解决开放问题或决策。 | 询问第一个未解决的 Human-required question，等待回答，逐个继续，然后更新并再次审查计划。 |
+| 3. 改动方案，输入改动内容 | 用户希望在批准前修改方案。 | 要求用户输入要调整的内容，修订 `Plan Conclusion` 和 `Self-Review`，然后回到本 gate。 |
 
 Do not treat silence, “ok”, “继续”, “确认”, or generic approval as permission to skip this gate unless the user explicitly selected one of the three paths or gave equivalent wording.
 
