@@ -18,12 +18,13 @@ skills/<skill-name>/SKILL.md
 
 ## Current Skills
 
-This plugin currently contains exactly four skills:
+This plugin currently contains five skills:
 
 - `coding-workflow`
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`
+- `using-tool`
 
 Do not add, rename, or remove skills without updating `skills-index.md`, relevant README content, and validation rules.
 
@@ -48,11 +49,13 @@ Rules:
 
 - `<skill-name>` must be kebab-case.
 - Frontmatter `name` must match the skill directory name.
-- `description` must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
-- Current built-in skills use Claude Code user-only mode with `disable-model-invocation: true`.
+- `description` for user-only skills must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
+- `description` for model-invocable skills must start with `Use when`, stay trigger-focused, and avoid workflow summaries.
+- Existing user-only skills use user-only mode with `disable-model-invocation: true`.
+- `using-tool` is model-invocable by user decision, is mandatory before using any skill from this plugin, and must not include `disable-model-invocation: true`.
 - User-only means the model must not invoke the skill on its own through the runtime `Skill` tool; a user slash-command invocation is still valid.
 - If a user explicitly invokes a user-only skill and the runtime `Skill` tool rejects it because of `disable-model-invocation: true`, the agent should read `skills/<skill-name>/SKILL.md` directly and follow it instead of treating the user invocation as invalid.
-- `writing-skills` uses agent-mode planning: do not use `EnterPlanMode` or `ExitPlanMode`; ask targeted clarification questions and output the plan directly in chat.
+- `writing-skills` uses agent-mode planning: do not use plan mode; ask targeted clarification questions and output the plan directly in chat.
 - When creating a future skill, ask the user to choose `user-only` or `model-invocable`; add `disable-model-invocation: true` only when the user chooses `user-only`.
 - Additional frontmatter keys are allowed when required by a runtime.
 - Skill-specific evals or fixtures stay inside that skill directory.
@@ -78,18 +81,21 @@ Validation must fail if:
 - `skills/` is missing.
 - A direct child of `skills/` lacks `SKILL.md`.
 - `skills/plugins` exists.
-- Any direct skill directory other than `coding-workflow`, `team-memory`, `idea-shaping`, or `writing-skills` exists.
+- Any direct skill directory other than `coding-workflow`, `team-memory`, `idea-shaping`, `writing-skills`, or `using-tool` exists.
 - A skill frontmatter `name` is missing or does not match its directory.
-- A skill frontmatter `description` is missing, blank, or does not require explicit invocation.
+- A user-only skill frontmatter `description` is missing, blank, or does not require explicit invocation.
+- A model-invocable skill frontmatter `description` is missing, blank, or does not start with `Use when`.
+- A model-invocable skill includes `disable-model-invocation: true`.
+- `using-tool` is missing a required runtime mapping file under `skills/using-tool/runtimes/`.
 - `skills-index.md` omits a current skill or references a missing skill.
 
 ## Adding A Future Skill
 
 1. Create `skills/<new-skill>/SKILL.md`.
 2. Ask the user to choose `user-only` or `model-invocable` invocation mode.
-3. Add frontmatter with matching `name` and explicit-invocation `description`; include `disable-model-invocation: true` only when the user chooses `user-only`.
+3. Add frontmatter with matching `name`; for user-only skills use an explicit-invocation `description` and include `disable-model-invocation: true`; for model-invocable skills use a trigger-focused `Use when` description and omit `disable-model-invocation`.
 4. Place skill-specific evals under `skills/<new-skill>/evals/` if needed.
 5. Update `skills-index.md`.
 6. Update `README.md` if the public skill list changes.
-7. Update `scripts/validate.ps1` allowed skill names if the new skill is approved.
+7. Update `scripts/validate.ps1` allowed skill names and invocation-mode lists if the new skill is approved.
 8. Run validation.

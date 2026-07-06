@@ -1,6 +1,6 @@
 {
   "name": "my-skills",
-  "description": "Personal agent skills plugin containing coding-workflow, team-memory, idea-shaping, and writing-skills.",
+  "description": "Personal agent skills plugin containing coding-workflow, team-memory, idea-shaping, writing-skills, and mandatory runtime adapter using-tool.",
   "version": "0.1.0",
   "author": {
     "name": "Administrator"

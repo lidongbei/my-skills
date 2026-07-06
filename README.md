@@ -1,6 +1,6 @@
 # my-skills
 
-`my-skills` is a single Claude Code plugin that packages four explicit-invocation agent skills.
+`my-skills` is a single Claude Code plugin that packages five agent skills.
 
 The plugin root is this repository. Its canonical plugin manifest is:
 
@@ -14,6 +14,7 @@ Included skills:
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`
+- `using-tool`
 
 ## Use As A Claude Code Plugin
 
@@ -49,13 +50,10 @@ List loaded plugins:
 
 ## Use The Skills
 
-All built-in skills are Claude Code user-only skills. Their frontmatter includes:
+Invocation modes:
 
-```yaml
-disable-model-invocation: true
-```
-
-This means the model should not invoke them automatically. Invoke them explicitly when you want to use them.
+- `coding-workflow`, `team-memory`, `idea-shaping`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
+- `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
 
 Examples:
 
@@ -79,12 +77,13 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 
 ## Skill Summary
 
-| Skill | Use explicitly when you want to... |
-|---|---|
-| `coding-workflow` | Plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
-| `team-memory` | Turn reusable project/team lessons or cross-project habits into durable memory. |
-| `idea-shaping` | Shape a product, feature, project, startup, side-project, or internal-tool idea. |
-| `writing-skills` | Create, diagnose, edit, or verify skills with a TDD-style process. |
+| Skill | Mode | Use when... |
+|---|---|---|
+| `coding-workflow` | user-only | You explicitly want to plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
+| `team-memory` | user-only | You explicitly want to turn reusable project/team lessons or cross-project habits into durable memory. |
+| `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
+| `writing-skills` | user-only | You explicitly want to create, diagnose, edit, or verify skills with a TDD-style process. |
+| `using-tool` | model-invocable | Before using any skill from this plugin, to adapt portable tool-use instructions to the current runtime. |
 
 ## Optional: Sync Skills Into Claude Code User Skills
 
@@ -133,6 +132,8 @@ Common locations:
 ~/.codex/skills/<skill-name>
 ```
 
+Before using any skill from this plugin in another agent runtime, load `using-tool` first, then load the matching runtime file under `skills/using-tool/runtimes/`. The runtime file explains how portable tool-action aliases such as `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, and `check` map to that runtime's actual tools or interaction patterns.
+
 For runtime-specific notes, see:
 
 - `adapters/claude-code/README.md`
@@ -153,6 +154,11 @@ my-skills/
 │   ├── team-memory/
 │   │   ├── SKILL.md
 │   │   └── evals/
+│   ├── using-tool/
+│   │   ├── SKILL.md
+│   │   └── runtimes/
+│   │       ├── claude-code.md
+│   │       └── codex.md
 │   └── writing-skills/
 │       ├── SKILL.md
 │       └── supporting files...
@@ -172,7 +178,7 @@ Core rules:
 - Keep `.claude-plugin/plugin.json` as the canonical plugin manifest.
 - Keep runtime skills under `skills/<skill-name>/SKILL.md`.
 - Keep `skills-index.md`, this README, and validation rules in sync after skill changes.
-- Built-in skills are Claude Code user-only skills with `disable-model-invocation: true`.
+- Existing user-only skills must remain user-only with `disable-model-invocation: true` unless the user explicitly approves a behavior change.
 - When creating a future skill, ask whether it should be `user-only` or `model-invocable` before writing frontmatter.
 
 Validate the plugin:

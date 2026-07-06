@@ -35,14 +35,16 @@ Current approved skills:
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`
+- `using-tool`
 
 ## Tool Mapping Notes
 
-Some skills mention Claude Code-specific tools or concepts. In Codex, adapt actions as follows:
+Before using any skill from this plugin in Codex, load `using-tool`, then use:
 
-- Read/search files: use shell commands such as `rg`, `cat`, and `ls`.
-- Edit files: use `apply_patch`.
-- Track plans: use Codex plan/update mechanisms.
-- Subagents: use Codex multi-agent support when available.
+```text
+skills/using-tool/runtimes/codex.md
+```
 
-Use each skill's intent and workflow, not necessarily its exact Claude Code tool names.
+That runtime file maps portable tool-action instructions to Codex tools or interaction patterns, including usage examples, parameters where applicable, and fallbacks.
+
+Use each skill's intent and workflow, not necessarily its exact Claude Code tool names or parameter formats.

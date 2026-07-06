@@ -20,18 +20,29 @@ Preview installation:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
 ```
 
-Install the four approved skills:
+Install the approved skills:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
 ```
 
-The script installs only:
+The script installs:
 
 - `coding-workflow`
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`
+- `using-tool`
+
+## Tool Mapping Notes
+
+Before using any skill from this plugin in Claude Code, load `using-tool`, then use:
+
+```text
+skills/using-tool/runtimes/claude-code.md
+```
+
+That runtime file maps portable tool-action instructions to Claude Code tools, usage shapes, parameters, and fallbacks.
 
 ## Policy
 

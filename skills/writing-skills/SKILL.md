@@ -23,7 +23,7 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 ## Hard Boundaries
 
 - Trigger only when the user explicitly invokes `/my-skills:writing-skills`, invokes `/writing-skills`, or explicitly instructs the agent to use `writing-skills`.
-- Do not use Claude Code plan mode (`EnterPlanMode` or `ExitPlanMode`) while using this skill. Ask targeted clarification questions interactively, then output the modification plan directly in agent mode.
+- Do not use plan mode while using this skill. Ask targeted clarification questions interactively, then output the modification plan directly in agent mode.
 - Do not auto-trigger for ordinary skill file mentions, `SKILL.md` reads, documentation edits, eval edits, trigger discussions, or skill-related tasks unless the user explicitly requests this skill.
 - Diagnose before modifying an existing skill. Do not edit from a failure report until you classify whether the problem is skill mismatch, missing user input, agent execution deviation, or an out-of-scope task.
 - Do not assume every failed skill run means the skill is wrong. If evidence is thin, ask for the original request, expected behavior, actual behavior, skipped step, retries, and human intervention.
@@ -31,6 +31,8 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 - Do not put workflow summaries in frontmatter `description`; keep descriptions trigger-only so agents read the full skill body.
 - Do not add broad confirmation gates to force safety. Human intervention must be tied to explicit rules; otherwise design the workflow so the agent continues correctly.
 - Do not make a skill longer as the default fix. Prefer the smallest change that blocks the observed failure without increasing over-triggering or workflow burden.
+- **Effectiveness beats brevity.** "Smallest change" means the smallest behavior scope, not the fewest words. If the observed failure is caused by missing concrete examples, unclear output shape, or insufficient executable detail, add the explicit shape/example needed to make agents succeed; reduce tokens by removing redundancy, not by compressing the critical guidance.
+- When creating or modifying skills, write portable tool actions with `using-tool` aliases: `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, and `check`. Do not invent new aliases or write ambiguous tool-action instructions. If a needed action does not clearly fit an existing alias, use `ask` to discuss the intent before drafting guidance.
 
 ## Core Failure to Avoid
 
@@ -68,7 +70,7 @@ For a new skill, do not start with a polished `SKILL.md`. Build the minimum reli
    Do not choose a default unless the user already made the choice explicit.
 4. Write trigger-only frontmatter description candidates.
 5. Define hard boundaries and explicit non-goals.
-6. Define the required workflow and the steps agents must not skip.
+6. Define the required workflow and the steps agents must not skip. Write tool-action instructions with `using-tool` aliases: `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, and `check`. If a needed action does not clearly fit one of these aliases, stop and use `ask` to discuss the intended action before drafting guidance.
 7. Choose the guidance form from the observed failure type: prohibition for discipline failures, recipe/contract for wrong-shaped output, required field for omitted elements, conditional rule for conditional behavior.
 8. Create RED pressure scenarios before writing the final guidance.
 9. Draft the skill to address those scenarios, then verify with GREEN/REFACTOR runs.
@@ -81,7 +83,7 @@ When the user explicitly invokes a user-only skill and the runtime `Skill` tool 
 
 ## Agent-Mode Modification Planning
 
-For modification requests, use agent-mode planning instead of Claude Code plan mode:
+For modification requests, use agent-mode planning instead of plan mode:
 
 1. Diagnose the failure layer.
 2. Ask the minimum necessary clarification questions.
@@ -346,6 +348,8 @@ Use words an agent would search for:
 
 **Problem:** getting-started and frequently-referenced skills load into EVERY conversation. Every token counts.
 
+Token efficiency must not remove the content that makes the skill work. Keep examples, schemas, output contracts, and decision rules when they are the mechanism that prevents the observed failure. Save tokens by deleting repeated explanation, narrative, or obvious background.
+
 **Target word counts:**
 - getting-started workflows: <150 words each
 - Frequently-loaded skills: <200 words total
@@ -592,6 +596,7 @@ Before writing guidance, classify the baseline failure. The form that bulletproo
 | Complies, but output has the wrong shape (bloated prompt, buried verdict, restated spec) | Positive recipe or contract: state what the output IS — its parts, in order | Prohibition list ("don't restate", "never narrate") |
 | Omits a required element from something they already produce | Structural: REQUIRED field or slot in the template they fill in | Prose reminders near the template |
 | Behavior should depend on a condition | Conditional keyed to an observable predicate ("if the brief exists, reference it") | Unconditional rule + exemption clauses |
+| Missing executable detail or examples | Concrete shape/example: show the minimal realistic command, schema, patch, output contract, or fallback wording agents can copy-adapt | Abstract mapping table alone when the failure is caused by agents not knowing the concrete form |
 
 **Why prohibitions backfire on shaping problems:** under a competing incentive ("make the prompt self-contained"), agents negotiate with "don't X". In head-to-head wording tests on dispatch-prompt guidance, the prohibition arm produced clearly more of the unwanted content than the recipe arm (fully separated distributions), and trended worse than even the no-guidance control — micro-test your own case rather than assuming, but never reach for the prohibition by default. A recipe leaves nothing to negotiate: the output matches the stated shape or it doesn't.
 
@@ -771,6 +776,7 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 - [ ] Clear overview with core principle
 - [ ] Address specific baseline failures identified in RED
 - [ ] Guidance form matches the failure type (see Match the Form to the Failure)
+- [ ] Tool-action instructions use backticked aliases from `using-tool`; unclear new actions were discussed with `ask` before adding guidance
 - [ ] For behavior-shaping guidance: wording micro-tested against a no-guidance control (5+ reps, every flagged match read manually) — N/A for pure reference skills
 - [ ] Code inline OR link to separate file
 - [ ] One excellent example (not multi-language)

@@ -5,12 +5,6 @@ argument-hint: "[idea or context]"
 arguments:
   - idea
 disable-model-invocation: true
-allowed-tools:
-  - Read
-  - Glob
-  - Grep
-  - Write
-  - AskUserQuestion
 ---
 
 # Idea Shaping
