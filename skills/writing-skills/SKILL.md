@@ -31,6 +31,7 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 - Do not put workflow summaries in frontmatter `description`; keep descriptions trigger-only so agents read the full skill body.
 - Do not add broad confirmation gates to force safety. Human intervention must be tied to explicit rules; otherwise design the workflow so the agent continues correctly.
 - Do not make a skill longer as the default fix. Prefer the smallest change that blocks the observed failure without increasing over-triggering or workflow burden.
+- **Effectiveness beats brevity.** "Smallest change" means the smallest behavior scope, not the fewest words. If the observed failure is caused by missing concrete examples, unclear output shape, or insufficient executable detail, add the explicit shape/example needed to make agents succeed; reduce tokens by removing redundancy, not by compressing the critical guidance.
 - When creating or modifying skills, write portable tool actions with `using-tool` aliases: `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, and `check`. Do not invent new aliases or write ambiguous tool-action instructions. If a needed action does not clearly fit an existing alias, use `ask` to discuss the intent before drafting guidance.
 
 ## Core Failure to Avoid
@@ -347,6 +348,8 @@ Use words an agent would search for:
 
 **Problem:** getting-started and frequently-referenced skills load into EVERY conversation. Every token counts.
 
+Token efficiency must not remove the content that makes the skill work. Keep examples, schemas, output contracts, and decision rules when they are the mechanism that prevents the observed failure. Save tokens by deleting repeated explanation, narrative, or obvious background.
+
 **Target word counts:**
 - getting-started workflows: <150 words each
 - Frequently-loaded skills: <200 words total
@@ -593,6 +596,7 @@ Before writing guidance, classify the baseline failure. The form that bulletproo
 | Complies, but output has the wrong shape (bloated prompt, buried verdict, restated spec) | Positive recipe or contract: state what the output IS — its parts, in order | Prohibition list ("don't restate", "never narrate") |
 | Omits a required element from something they already produce | Structural: REQUIRED field or slot in the template they fill in | Prose reminders near the template |
 | Behavior should depend on a condition | Conditional keyed to an observable predicate ("if the brief exists, reference it") | Unconditional rule + exemption clauses |
+| Missing executable detail or examples | Concrete shape/example: show the minimal realistic command, schema, patch, output contract, or fallback wording agents can copy-adapt | Abstract mapping table alone when the failure is caused by agents not knowing the concrete form |
 
 **Why prohibitions backfire on shaping problems:** under a competing incentive ("make the prompt self-contained"), agents negotiate with "don't X". In head-to-head wording tests on dispatch-prompt guidance, the prohibition arm produced clearly more of the unwanted content than the recipe arm (fully separated distributions), and trended worse than even the no-guidance control — micro-test your own case rather than assuming, but never reach for the prohibition by default. A recipe leaves nothing to negotiate: the output matches the stated shape or it doesn't.
 
