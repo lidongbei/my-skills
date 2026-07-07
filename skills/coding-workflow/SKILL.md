@@ -148,6 +148,61 @@ Final reports must include:
 
 Say “not validated” or “validation failed” when true. Do not claim completion with “should be fixed,” “looks fine,” or no evidence.
 
+### 8. Post-Validation Completion Gate
+
+After completing edits and reporting `Validation`, if this workflow produced uncommitted file changes and the user has not already specified the completion action, stop and use using-tool's `ask` action.
+
+Completion results, when recorded, go under:
+
+```text
+docs/complete/YYYY-MM-DD-<topic>.md
+```
+
+Use the same `<topic>` as the saved plan when one exists; otherwise use a concise kebab-case task topic. If the workflow has a saved plan file, start the completion record with a link to that plan.
+
+The `ask` prompt must be:
+
+> 修改和验证已完成，请选择下一步（必须明确选择其中一项）：
+
+Present these Chinese options in this order. For options 2 and 3, include the concrete planned result path in the option description:
+
+| Option | Meaning | Next action |
+|---|---|---|
+| 1. 提交 | 只提交本次完成的改动。 | Use `run` to inspect status, commit relevant changes, then report the commit hash. |
+| 2. 记录结果并提交 | 将完成结果保存到 `docs/complete/YYYY-MM-DD-<topic>.md`，然后提交。 | Use `edit` to create/update the completion record, use `run` to commit relevant changes, then report the result path and commit hash. |
+| 3. 记录结果 | 将完成结果保存到 `docs/complete/YYYY-MM-DD-<topic>.md`，但不提交。 | Use `edit` to create/update the completion record, then report the result path and state that changes remain uncommitted. |
+| 4. 保持现状 | 不记录结果、不提交、不推送。 | Report changed files and validation evidence; state that changes remain uncommitted. |
+
+Completion record template:
+
+```markdown
+# <Title>
+
+Plan: [<plan title>](../plans/YYYY-MM-DD-<topic>.md) <!-- include only when a saved plan exists -->
+
+## Summary
+
+- 
+
+## Changed Files
+
+- 
+
+## Validation
+
+- Ran:
+- Result:
+- Not run:
+- Reason:
+
+## Completion Choice
+
+- Selected:
+- Commit:
+```
+
+Do not commit, push, or write a completion record silently. If there are no uncommitted changes, state that and skip this gate.
+
 ## Common Mistakes
 
 | Mistake | Correction |
@@ -160,3 +215,4 @@ Say “not validated” or “validation failed” when true. Do not claim compl
 | Choosing execution mode silently | Ask the user to choose mode after approval unless already specified |
 | Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
 | Completion without evidence | Report checks and results |
+| Ending with uncommitted changes | After validation, use the post-validation completion gate to offer commit / record result and commit / record result / keep current state |
