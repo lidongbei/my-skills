@@ -84,9 +84,9 @@ Classify each decision point:
 | Agent-recommended | Low-risk, reversible, technical detail with clear best practice; state the choice and proceed unless the user objects |
 | Human decision required | Scope change, irreversible action, tradeoff with no clear winner, user-preference-dependent, or needs business context |
 
-Present Human-required items one at a time. Wait for an answer before moving to the next. Do not batch multiple questions into one message.
+Present Human-required items one at a time using using-tool's `ask`. Wait for an answer before moving to the next. Do not batch multiple questions into one message.
 
-For each Human-required item:
+For each Human-required item, use this content shape to build the `ask` question and options:
 
 ```markdown
 Decision: <what needs to be decided>
@@ -94,6 +94,15 @@ Impact:   <how it affects implementation>
 Options:  <concrete choices if applicable>
 My lean:  <Agent recommendation if any>
 ```
+
+`ask` mapping:
+
+- Use `Decision` as the question.
+- Convert each concrete option into one `ask` option.
+- Put the recommended option first when there is a clear recommendation, and mark it with “（推荐）”.
+- Put option impact/tradeoff in the option description.
+- Ask only this one decision; do not include other decisions in the same `ask`.
+- Use Chinese labels and descriptions when the surrounding conversation is Chinese.
 
 If there are no Human-required items, state that explicitly and continue.
 
