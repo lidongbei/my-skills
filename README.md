@@ -1,6 +1,6 @@
 # my-skills
 
-`my-skills` is a single Claude Code plugin that packages five agent skills.
+`my-skills` is a single Claude Code plugin that packages seven agent skills.
 
 The plugin root is this repository. Its canonical plugin manifest is:
 
@@ -13,6 +13,8 @@ Included skills:
 - `coding-workflow`
 - `team-memory`
 - `idea-shaping`
+- `session-handoff-save`
+- `session-handoff-load`
 - `writing-skills`
 - `using-tool`
 
@@ -52,7 +54,7 @@ List loaded plugins:
 
 Invocation modes:
 
-- `coding-workflow`, `team-memory`, `idea-shaping`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
+- `coding-workflow`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
 - `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
 
 Examples:
@@ -82,6 +84,8 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | `coding-workflow` | user-only | You explicitly want to plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
 | `team-memory` | user-only | You explicitly want to turn reusable project/team lessons or cross-project habits into durable memory. |
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
+| `session-handoff-save` | user-only | You explicitly want to save a temporary current-session handoff for a future session. |
+| `session-handoff-load` | user-only | You explicitly want to choose and load an indexed temporary session handoff. |
 | `writing-skills` | user-only | You explicitly want to create, diagnose, edit, or verify skills with a TDD-style process. |
 | `using-tool` | model-invocable | Before using any skill from this plugin, to adapt portable tool-use instructions to the current runtime. |
 
@@ -150,6 +154,10 @@ my-skills/
 │   ├── coding-workflow/
 │   │   └── SKILL.md
 │   ├── idea-shaping/
+│   │   └── SKILL.md
+│   ├── session-handoff-load/
+│   │   └── SKILL.md
+│   ├── session-handoff-save/
 │   │   └── SKILL.md
 │   ├── team-memory/
 │   │   ├── SKILL.md
