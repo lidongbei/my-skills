@@ -110,15 +110,21 @@ Do not save, commit, or ask for execution mode until all Human-required decision
 
 ### 5. Save, Commit, Ask User To Choose Mode
 
-After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then ask the user to choose the execution mode before implementation unless the user has already explicitly specified it.
+After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
 
-Present these modes to the user and wait for their choice:
+Do not ask the user to type `Main agent`, `Single subagent`, or `Multiple subagents` in free text. The execution mode choice must be a structured `ask` choice.
 
-| Mode | Use when |
-|---|---|
-| Main agent | Small, low-risk, few files |
-| Single subagent | Medium, multi-file, or clean main context |
-| Multiple subagents | Independent parallel subtasks |
+The `ask` prompt must be:
+
+> 请选择实现执行模式：
+
+Present these Chinese options in this order without changing their existing semantics:
+
+| Option | Meaning | Use when |
+|---|---|---|
+| 1. 主会话直接实现 | Main agent | Small, low-risk, few files |
+| 2. 单个子 agent 实现 | Single subagent | Medium, multi-file, or clean main context |
+| 3. 多个子 agent 分工 | Multiple subagents | Independent parallel subtasks |
 
 Subagents are optional.
 
@@ -212,7 +218,8 @@ Do not commit, push, or write a completion record silently. If there are no unco
 | Guessed cause as fact | Mark uncertainty or investigate |
 | Heavy ceremony | Keep lightweight |
 | Testing every tiny edit | Use risk-sized validation |
-| Choosing execution mode silently | Ask the user to choose mode after approval unless already specified |
+| Choosing execution mode silently | Use using-tool's `ask` action to make the user choose mode after approval unless already specified |
+| Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent`, `Single subagent`, or `Multiple subagents` |
 | Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
 | Completion without evidence | Report checks and results |
 | Ending with uncommitted changes | After validation, use the post-validation completion gate to offer commit / record result and commit / record result / keep current state |
