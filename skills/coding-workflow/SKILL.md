@@ -128,7 +128,21 @@ Present these Chinese options in this order without changing their existing sema
 
 Subagents are optional.
 
-### 6. Risk-Sized Loops
+### 6. Single Subagent Worktree Lifecycle
+
+Use this subsection when execution mode is “单个子 agent 实现” and the subagent works in an isolated worktree.
+
+Required lifecycle:
+
+1. Use `agent` to request a candidate implementation in the isolated worktree. The subagent must return changed files, key design notes, and validation evidence; it must not claim the main worktree was changed.
+2. Use `check` to review the returned result before accepting it: inspect the diff or summary, compare it with the approved plan, and decide whether the candidate is accepted, needs revision, or is discarded.
+3. If accepted, create an implementation commit in the isolated worktree before bringing the work back. Do not merge uncommitted worktree changes into the main worktree.
+4. Use `run` / `check` to merge or otherwise bring that commit into the main worktree, then verify the main worktree contains the expected commit and files.
+5. After the main worktree has the accepted commit, clean up the isolated worktree. If cleanup is not possible in the runtime, report the leftover worktree path or limitation explicitly.
+
+Do not treat “subagent finished in an isolated worktree” as completion. Completion means the accepted commit is present in the main worktree, validation evidence is reported, and the isolated worktree has been cleaned up or the cleanup limitation has been disclosed.
+
+### 7. Risk-Sized Loops
 
 A step is small enough to identify responsibility and large enough to deserve validation.
 
@@ -140,7 +154,7 @@ A step is small enough to identify responsibility and large enough to deserve va
 
 Use narrow validation first when full validation is expensive. Before completion claims, task switches, or implementation commits, validate strongly enough to support the claim.
 
-### 7. Evidence Before Completion Claims
+### 8. Evidence Before Completion Claims
 
 Final reports must include:
 
@@ -154,7 +168,7 @@ Final reports must include:
 
 Say “not validated” or “validation failed” when true. Do not claim completion with “should be fixed,” “looks fine,” or no evidence.
 
-### 8. Post-Validation Completion Gate
+### 9. Post-Validation Completion Gate
 
 After completing edits and reporting `Validation`, if this workflow produced uncommitted file changes and the user has not already specified the completion action, stop and use using-tool's `ask` action.
 
@@ -222,4 +236,5 @@ Do not commit, push, or write a completion record silently. If there are no unco
 | Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent`, `Single subagent`, or `Multiple subagents` |
 | Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
 | Completion without evidence | Report checks and results |
+| Treating isolated subagent work as done | Main agent must review, commit in the isolated worktree, bring the accepted commit into the main worktree, verify it there, and clean up the isolated worktree |
 | Ending with uncommitted changes | After validation, use the post-validation completion gate to offer commit / record result and commit / record result / keep current state |
