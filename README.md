@@ -166,7 +166,8 @@ my-skills/
 │   │   ├── SKILL.md
 │   │   └── runtimes/
 │   │       ├── claude-code.md
-│   │       └── codex.md
+│   │       ├── codex.md
+│   │       └── trae.md
 │   └── writing-skills/
 │       ├── SKILL.md
 │       └── supporting files...

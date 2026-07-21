@@ -172,7 +172,7 @@ if (!(Test-Path $Skills)) {
     }
 
     if ($skillDir.Name -eq 'using-tool') {
-      foreach ($runtimeFile in @('runtimes\claude-code.md', 'runtimes\codex.md')) {
+      foreach ($runtimeFile in @('runtimes\claude-code.md', 'runtimes\codex.md', 'runtimes\trae.md')) {
         $runtimePath = Join-Path $skillDir.FullName $runtimeFile
         if (!(Test-Path $runtimePath)) {
           Add-ValidationError "Missing using-tool runtime mapping: $runtimePath"

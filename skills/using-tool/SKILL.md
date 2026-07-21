@@ -71,6 +71,7 @@ Load exactly one mapping file for the runtime you are using:
 |---|---|
 | Claude Code | `runtimes/claude-code.md` |
 | Codex | `runtimes/codex.md` |
+| Trae IDE | `runtimes/trae.md` |
 
 Runtime files are operating manuals, not only lookup tables. They should define:
 
