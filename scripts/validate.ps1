@@ -5,7 +5,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 $Skills = Join-Path $Root 'skills'
 $PluginManifest = Join-Path $Root '.claude-plugin\plugin.json'
 $SkillsIndex = Join-Path $Root 'skills-index.md'
-$UserOnlySkills = @('coding-workflow', 'idea-shaping', 'team-memory', 'writing-skills')
+$UserOnlySkills = @('coding-workflow', 'idea-shaping', 'session-handoff-load', 'session-handoff-save', 'team-memory', 'writing-skills')
 $ModelInvocableSkills = @('using-tool')
 $AllowedSkills = @($UserOnlySkills + $ModelInvocableSkills)
 $errors = @()
@@ -172,7 +172,7 @@ if (!(Test-Path $Skills)) {
     }
 
     if ($skillDir.Name -eq 'using-tool') {
-      foreach ($runtimeFile in @('runtimes\claude-code.md', 'runtimes\codex.md')) {
+      foreach ($runtimeFile in @('runtimes\claude-code.md', 'runtimes\codex.md', 'runtimes\trae.md')) {
         $runtimePath = Join-Path $skillDir.FullName $runtimeFile
         if (!(Test-Path $runtimePath)) {
           Add-ValidationError "Missing using-tool runtime mapping: $runtimePath"

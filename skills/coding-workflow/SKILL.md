@@ -39,7 +39,7 @@ Before editing, produce:
 - Risks / open questions:
 ```
 
-Emphasis: bugs → root cause; features → motivation/constraints; refactors → friction/safety; workflows/skills → behavior gap/principle. Missing facts? Investigate, then ask if still unclear.
+Emphasis: bugs → root cause; features → motivation/constraints; refactors → friction/safety; workflows/skills → behavior gap/principle. Missing facts? Investigate, then ask if still unclear. Match exploration tool to task scope: one `find` (Grep or MCP `search_code`) before dispatching `agent` (Explore); reserve `agent` for genuinely cross-module or uncertain-scope investigation.
 
 ### 2. Self-Review Before Human Review
 
@@ -110,19 +110,39 @@ Do not save, commit, or ask for execution mode until all Human-required decision
 
 ### 5. Save, Commit, Ask User To Choose Mode
 
-After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then ask the user to choose the execution mode before implementation unless the user has already explicitly specified it.
+After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
 
-Present these modes to the user and wait for their choice:
+Do not ask the user to type `Main agent`, `Single subagent`, or `Multiple subagents` in free text. The execution mode choice must be a structured `ask` choice.
 
-| Mode | Use when |
-|---|---|
-| Main agent | Small, low-risk, few files |
-| Single subagent | Medium, multi-file, or clean main context |
-| Multiple subagents | Independent parallel subtasks |
+The `ask` prompt must be:
+
+> 请选择实现执行模式：
+
+Present these Chinese options in this order without changing their existing semantics:
+
+| Option | Meaning | Use when |
+|---|---|---|
+| 1. 主会话直接实现 | Main agent | Small, low-risk, few files |
+| 2. 单个子 agent 实现 | Single subagent | Medium, multi-file, or clean main context |
+| 3. 多个子 agent 分工 | Multiple subagents | Independent parallel subtasks |
 
 Subagents are optional.
 
-### 6. Risk-Sized Loops
+### 6. Single Subagent Worktree Lifecycle
+
+Use this subsection when execution mode is “单个子 agent 实现” and the subagent works in an isolated worktree.
+
+Required lifecycle:
+
+1. Use `agent` to request a candidate implementation in the isolated worktree. The subagent must return changed files, key design notes, and validation evidence; it must not claim the main worktree was changed.
+2. Use `check` to review the returned result before accepting it: inspect the diff or summary, compare it with the approved plan, and decide whether the candidate is accepted, needs revision, or is discarded.
+3. If accepted, create an implementation commit in the isolated worktree before bringing the work back. Do not merge uncommitted worktree changes into the main worktree.
+4. Use `run` / `check` to merge or otherwise bring that commit into the main worktree, then verify the main worktree contains the expected commit and files.
+5. After the main worktree has the accepted commit, clean up the isolated worktree. If cleanup is not possible in the runtime, report the leftover worktree path or limitation explicitly.
+
+Do not treat “subagent finished in an isolated worktree” as completion. Completion means the accepted commit is present in the main worktree, validation evidence is reported, and the isolated worktree has been cleaned up or the cleanup limitation has been disclosed.
+
+### 7. Risk-Sized Loops
 
 A step is small enough to identify responsibility and large enough to deserve validation.
 
@@ -134,7 +154,7 @@ A step is small enough to identify responsibility and large enough to deserve va
 
 Use narrow validation first when full validation is expensive. Before completion claims, task switches, or implementation commits, validate strongly enough to support the claim.
 
-### 7. Evidence Before Completion Claims
+### 8. Evidence Before Completion Claims
 
 Final reports must include:
 
@@ -148,7 +168,7 @@ Final reports must include:
 
 Say “not validated” or “validation failed” when true. Do not claim completion with “should be fixed,” “looks fine,” or no evidence.
 
-### 8. Post-Validation Completion Gate
+### 9. Post-Validation Completion Gate
 
 After completing edits and reporting `Validation`, if this workflow produced uncommitted file changes and the user has not already specified the completion action, stop and use using-tool's `ask` action.
 
@@ -212,7 +232,10 @@ Do not commit, push, or write a completion record silently. If there are no unco
 | Guessed cause as fact | Mark uncertainty or investigate |
 | Heavy ceremony | Keep lightweight |
 | Testing every tiny edit | Use risk-sized validation |
-| Choosing execution mode silently | Ask the user to choose mode after approval unless already specified |
+| Choosing execution mode silently | Use using-tool's `ask` action to make the user choose mode after approval unless already specified |
+| Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent`, `Single subagent`, or `Multiple subagents` |
 | Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
 | Completion without evidence | Report checks and results |
+| Treating isolated subagent work as done | Main agent must review, commit in the isolated worktree, bring the accepted commit into the main worktree, verify it there, and clean up the isolated worktree |
 | Ending with uncommitted changes | After validation, use the post-validation completion gate to offer commit / record result and commit / record result / keep current state |
+| Over-exploring simple tasks | Match search tool to task scope; run one `find` (Grep or MCP `search_code`) before dispatching `agent` (Explore); reserve `agent` for genuinely cross-module or uncertain-scope investigation |

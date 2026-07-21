@@ -48,6 +48,21 @@ Do not use aliases to rename frontmatter metadata, runtime policy names, or exac
 
 Other plugin skills should write portable tool actions as backticked aliases. Example: "Use `ask` before choosing the invocation mode."
 
+## Project Memory Index
+
+This plugin exposes the repository long-term memory index at:
+
+```text
+docs/memory/MEMORY.md
+```
+
+Use this as an index only. Do not auto-load every memory entry.
+
+- When a task mentions prior project knowledge, team memory, historical decisions, reusable lessons, or asks what was remembered before, use `read` to inspect `docs/memory/MEMORY.md` first.
+- Then use `read` only on the specific linked memory entries that match the current task.
+- If `docs/memory/MEMORY.md` is missing or empty, say no repository memory index is available yet; do not invent entries.
+- Use `team-memory` only when the user explicitly asks to save or curate durable memory. Temporary session continuation belongs in `docs/handoffs/HANDOFFS.md`, not `docs/memory/MEMORY.md`.
+
 ## Runtime Files
 
 Load exactly one mapping file for the runtime you are using:
@@ -56,6 +71,7 @@ Load exactly one mapping file for the runtime you are using:
 |---|---|
 | Claude Code | `runtimes/claude-code.md` |
 | Codex | `runtimes/codex.md` |
+| Trae IDE | `runtimes/trae.md` |
 
 Runtime files are operating manuals, not only lookup tables. They should define:
 
