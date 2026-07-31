@@ -29,6 +29,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-c
 The script installs:
 
 - `coding-workflow`
+- `generating-reqable-docs`
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`

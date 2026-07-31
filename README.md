@@ -1,6 +1,6 @@
 # my-skills
 
-`my-skills` is a single Claude Code plugin that packages seven agent skills.
+`my-skills` is a single Claude Code plugin that packages eight agent skills.
 
 The plugin root is this repository. Its canonical plugin manifest is:
 
@@ -16,6 +16,7 @@ Included skills:
 - `session-handoff-save`
 - `session-handoff-load`
 - `writing-skills`
+- `generating-reqable-docs`
 - `using-tool`
 
 ## Use As A Claude Code Plugin
@@ -54,7 +55,7 @@ List loaded plugins:
 
 Invocation modes:
 
-- `coding-workflow`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
+- `coding-workflow`, `generating-reqable-docs`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
 - `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
 
 Examples:
@@ -82,6 +83,7 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | Skill | Mode | Use when... |
 |---|---|---|
 | `coding-workflow` | user-only | You explicitly want to plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
+| `generating-reqable-docs` | user-only | You explicitly want to generate a Reqable Collection 3.0 JSON interface document from an API definition or reference collection. |
 | `team-memory` | user-only | You explicitly want to turn reusable project/team lessons or cross-project habits into durable memory. |
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
 | `session-handoff-save` | user-only | You explicitly want to save a temporary current-session handoff for a future session. |
@@ -152,6 +154,8 @@ my-skills/
 │   └── plugin.json
 ├── skills/
 │   ├── coding-workflow/
+│   │   └── SKILL.md
+│   ├── generating-reqable-docs/
 │   │   └── SKILL.md
 │   ├── idea-shaping/
 │   │   └── SKILL.md

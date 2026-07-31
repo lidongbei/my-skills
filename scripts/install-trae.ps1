@@ -15,9 +15,10 @@ $TargetSkills  = Join-Path $TargetTrae 'skills'
 $Gitignore     = Join-Path $Target '.gitignore'
 $GitignoreLine = '.trae/'
 
-# Mirror PROJECT_SPEC.md / validate.ps1: install all seven skills.
+# Mirror PROJECT_SPEC.md / validate.ps1: install all eight skills.
 $ApprovedSkills = @(
   'coding-workflow',
+  'generating-reqable-docs',
   'idea-shaping',
   'team-memory',
   'using-tool',

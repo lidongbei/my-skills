@@ -29,6 +29,7 @@ into the target location Trae is configured to scan.
 Current approved skills:
 
 - `coding-workflow`
+- `generating-reqable-docs`
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`

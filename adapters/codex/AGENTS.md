@@ -32,6 +32,7 @@ into one of:
 Current approved skills:
 
 - `coding-workflow`
+- `generating-reqable-docs`
 - `team-memory`
 - `idea-shaping`
 - `writing-skills`
