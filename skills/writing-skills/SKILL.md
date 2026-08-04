@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 **Writing skills IS Test-Driven Development applied to process documentation.**
 
-**Personal skills live in your runtime's skills directory.** For Claude Code in this repo, install with the plugin's `scripts/install-claude-code.ps1` helper or place skills under `~/.claude/skills/`. Other runtimes that consume `SKILL.md` directories can copy or symlink selected directories from `skills/` into their runtime skill directories.
+**Personal skills live in your runtime's skills directory.** For Claude Code, this repository should be installed as one plugin with `claude --plugin-dir <path>` for development or the plugin's `scripts/install-claude-code.ps1` helper for persistent installation. Other runtimes that consume `SKILL.md` directories can copy or symlink selected directories from `skills/` into their runtime skill directories.
 
 You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
 

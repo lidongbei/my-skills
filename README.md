@@ -91,29 +91,55 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | `writing-skills` | user-only | You explicitly want to create, diagnose, edit, or verify skills with a TDD-style process. |
 | `using-tool` | model-invocable | Before using any skill from this plugin, to adapt portable tool-use instructions to the current runtime. |
 
-## Optional: Sync Skills Into Claude Code User Skills
+## Optional: Persistently Install This Claude Code Plugin
 
-The preferred Claude Code path is plugin loading with `--plugin-dir`. If you specifically need user-level skill copies under `~/.claude/skills`, use the helper script.
+The preferred development path is loading the repository for the current session:
 
-Preview the sync:
+```powershell
+claude --plugin-dir .
+```
+
+To persistently install the entire repository as one Claude Code plugin, run:
+
+Preview the installation without changing Claude Code configuration:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
 ```
 
-Copy approved skills into `~/.claude/skills`:
+Install for the current user (the default, available across projects):
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
 ```
 
-Copy into a custom target directory:
+Install with another Claude Code scope:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -Target "C:\Users\you\.claude\skills"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -Scope project
 ```
 
-This script validates the plugin first, then replaces the installed skill copies. Treat this as a sync/copy workflow, not the primary plugin workflow.
+The script validates the repository, registers its local marketplace, and runs Claude Code's native `plugin install` command. It installs one `my-skills` plugin containing all eight skills; it does not copy separate skill directories into `~/.claude/skills`.
+
+Inspect or remove the persistent installation with Claude Code's native commands:
+
+```powershell
+claude plugin list
+claude plugin details my-skills
+claude plugin uninstall my-skills@my-skills
+```
+
+## Optional: Sync Skills Into Claude Code User Skills
+
+If you specifically need user-level skill copies under `~/.claude/skills` for a non-plugin runtime, use the legacy copy helper. This is separate from the primary Claude Code plugin installation workflow.
+
+Preview the sync:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/sync-from-claude.ps1 -WhatIf
+```
+
+This script is a copy/sync utility, not the plugin installer.
 
 ## Use With Other Agent Runtimes
 
@@ -151,7 +177,8 @@ For runtime-specific notes, see:
 ```text
 my-skills/
 ├── .claude-plugin/
-│   └── plugin.json
+│   ├── plugin.json
+│   └── marketplace.json
 ├── skills/
 │   ├── coding-workflow/
 │   │   └── SKILL.md
