@@ -171,6 +171,8 @@ For runtime-specific notes, see:
 - `adapters/claude-code/README.md`
 - `adapters/agents/AGENTS.md`
 - `adapters/codex/AGENTS.md`
+- `adapters/trae/README.md`
+- `adapters/codearts/README.md`
 
 ## Repository Layout
 
@@ -198,7 +200,8 @@ my-skills/
 │   │   └── runtimes/
 │   │       ├── claude-code.md
 │   │       ├── codex.md
-│   │       └── trae.md
+│   │       ├── trae.md
+│   │       └── codearts.md
 │   └── writing-skills/
 │       ├── SKILL.md
 │       └── supporting files...

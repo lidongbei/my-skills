@@ -1,6 +1,6 @@
 ---
 name: using-tool
-description: Use when using any skill from this plugin, before executing plugin skill instructions, or when adapting tool-use instructions between Claude Code, Codex, or another agent runtime.
+description: Use when using any skill from this plugin, before executing plugin skill instructions, or when adapting tool-use instructions between Claude Code, Codex, Trae, CodeArts, or another agent runtime.
 ---
 
 # Using Tool
@@ -29,7 +29,7 @@ Use this skill when:
 - You are about to use any skill from this plugin.
 - A skill says to use `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, or `check`.
 - A skill, prompt, or adapter mentions concrete source-runtime tools such as `AskUserQuestion`, `apply_patch`, task tracking, subagents, shell commands, plan/update mechanisms, or verifier tools.
-- A tool instruction must move between Claude Code, Codex, or another agent runtime.
+- A tool instruction must move between Claude Code, Codex, Trae, CodeArts, or another agent runtime.
 
 Do not use aliases to rename frontmatter metadata, runtime policy names, or exact forbidden tools. For example, a rule that explicitly forbids `EnterPlanMode` should keep that exact runtime name when the current runtime is Claude Code.
 
@@ -72,6 +72,7 @@ Load exactly one mapping file for the runtime you are using:
 | Claude Code | `runtimes/claude-code.md` |
 | Codex | `runtimes/codex.md` |
 | Trae IDE | `runtimes/trae.md` |
+| CodeArts | `runtimes/codearts.md` |
 
 Runtime files are operating manuals, not only lookup tables. They should define:
 
