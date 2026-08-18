@@ -1,0 +1,18 @@
+{
+  "name": "my-skills",
+  "description": "Local marketplace for the my-skills Claude Code plugin",
+  "owner": {
+    "name": "Administrator"
+  },
+  "plugins": [
+    {
+      "name": "my-skills",
+      "description": "Personal agent skills plugin containing coding-workflow, team-memory, idea-shaping, session-handoff-save, session-handoff-load, writing-skills, generating-reqable-docs, and mandatory runtime adapter using-tool.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "Administrator"
+      }
+    }
+  ]
+}

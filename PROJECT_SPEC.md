@@ -68,6 +68,8 @@ Rules:
 
 `.claude-plugin/plugin.json` is the canonical plugin manifest. Keep it valid JSON and describe the whole plugin, not individual skills.
 
+`.claude-plugin/marketplace.json` is the local marketplace manifest used for persistent Claude Code installation. Its marketplace plugin entry must point to the repository root with `source: "./"` and use the same plugin name as `plugin.json`.
+
 Do not recreate the old root `plugin.json` bundle manifest unless a specific external tool requirement is documented first.
 
 ## Validation Rules
@@ -81,6 +83,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate.ps1
 Validation must fail if:
 
 - `.claude-plugin/plugin.json` is missing or invalid JSON.
+- `.claude-plugin/marketplace.json` is missing, invalid JSON, or points the plugin entry away from the repository root.
 - `skills/` is missing.
 - A direct child of `skills/` lacks `SKILL.md`.
 - `skills/plugins` exists.

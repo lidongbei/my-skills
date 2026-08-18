@@ -4,6 +4,7 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $Skills = Join-Path $Root 'skills'
 $PluginManifest = Join-Path $Root '.claude-plugin\plugin.json'
+$MarketplaceManifest = Join-Path $Root '.claude-plugin\marketplace.json'
 $SkillsIndex = Join-Path $Root 'skills-index.md'
 $UserOnlySkills = @('coding-workflow', 'generating-reqable-docs', 'idea-shaping', 'session-handoff-load', 'session-handoff-save', 'team-memory', 'writing-skills')
 $ModelInvocableSkills = @('using-tool')
@@ -100,6 +101,30 @@ if (!(Test-Path $PluginManifest)) {
     Get-Content $PluginManifest -Raw | ConvertFrom-Json | Out-Null
   } catch {
     Add-ValidationError "Plugin manifest is not valid JSON: $($_.Exception.Message)"
+  }
+}
+
+if (!(Test-Path $MarketplaceManifest)) {
+  Add-ValidationError "Missing marketplace manifest: $MarketplaceManifest"
+} elseif (!(Test-Path $PluginManifest)) {
+  Add-ValidationError "Cannot validate marketplace manifest without plugin manifest: $PluginManifest"
+} else {
+  try {
+    $manifest = Get-Content $PluginManifest -Raw | ConvertFrom-Json
+    $marketplace = Get-Content $MarketplaceManifest -Raw | ConvertFrom-Json
+
+    if ([string]::IsNullOrWhiteSpace($marketplace.name)) {
+      Add-ValidationError "Marketplace manifest has no name: $MarketplaceManifest"
+    }
+
+    $marketplacePlugin = @($marketplace.plugins | Where-Object { $_.name -eq $manifest.name }) | Select-Object -First 1
+    if ($null -eq $marketplacePlugin) {
+      Add-ValidationError "Marketplace manifest does not contain plugin '$($manifest.name)': $MarketplaceManifest"
+    } elseif ($marketplacePlugin.source -ne './') {
+      Add-ValidationError "Marketplace plugin '$($manifest.name)' must use source './': $MarketplaceManifest"
+    }
+  } catch {
+    Add-ValidationError "Marketplace manifest is not valid JSON: $($_.Exception.Message)"
   }
 }
 
