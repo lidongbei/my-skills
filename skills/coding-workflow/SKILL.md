@@ -24,6 +24,40 @@ Non-trivial means a wrong edit could affect behavior, touch multiple files, requ
 
 ## Workflow
 
+### Artifact Root
+
+Plan and completion records are saved under a configurable **artifact root**, not inside the working repository.
+
+Default artifact root: the parent of the current repository root plus `<project name>.agent`, where `<project name>` is the repository directory name. Example: repository `D:\AI\my-skills` → default `D:\AI\my-skills.agent`.
+
+Each runtime mapping defines one project-level location for `coding-workflow` configuration. Read and update only that location; do not guess, scan, or modify other instruction/configuration files. The managed configuration block is:
+
+```markdown
+<!-- coding-workflow:artifact-root:start -->
+## Coding Workflow Configuration
+
+- Artifact root: `<absolute path>`
+<!-- coding-workflow:artifact-root:end -->
+```
+
+Resolve the artifact root for the current session, in this order:
+
+1. If a root was already resolved in this session and the user has not explicitly supplied a different path, reuse it.
+2. If the user explicitly gave a directory in the invocation or an earlier message, use it and update the current runtime's managed configuration block after validating it.
+3. Otherwise, read the current runtime mapping's project-level location. If it contains exactly one valid managed block with a nonempty absolute `Artifact root` path, use that path after validating it.
+4. If the current runtime's designated location contains no managed block, the first time a plan or completion record needs to be saved, use using-tool's `ask` action to choose the artifact root once, marking the default as the recommended option. After validation, append the managed configuration block before saving the plan or completion record. If one or more managed blocks exist but do not satisfy step 3, follow the invalid-configuration rule below instead.
+
+If the configured block is malformed, duplicated, or names a root that fails validation, do not silently repair it, fall back to another file, or overwrite the designated location. Use `ask` to explain that persistence is blocked and require the user to resolve the configuration. Do not persist a new root until the designated location contains either no managed block (then append one) or exactly one valid managed block (then replace only that block). Preserve all content outside that block.
+
+Paths under the artifact root:
+
+```text
+<artifact root>/plans/YYYY-MM-DD-<topic>.md
+<artifact root>/complete/YYYY-MM-DD-<topic>.md
+```
+
+Git: the artifact root must be a standalone git repository outside the working repository. Before first writing into it, run `git -C "<artifact root>" rev-parse --show-toplevel`. If it fails, run `git init` in the artifact root. If it resolves to a directory other than the artifact root, do not use or commit into that parent repository; use using-tool's `ask` action to require a separate artifact root. Commit plans and completion records in the artifact-root repository, not the working repository.
+
 ### 1. Plan First
 
 Before editing, produce:
@@ -110,7 +144,7 @@ Do not save, commit, or ask for execution mode until all Human-required decision
 
 ### 5. Save, Commit, Ask User To Choose Mode
 
-After explicit approval: save the plan under `docs/plans/YYYY-MM-DD-<topic>.md`, commit the plan to git, then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
+After explicit approval: save the plan under `<artifact root>/plans/YYYY-MM-DD-<topic>.md`, commit the plan in the artifact-root repository (resolving and initializing it per the `Artifact Root` step), then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
 
 Do not ask the user to type `Main agent`, `Single subagent`, or `Multiple subagents` in free text. The execution mode choice must be a structured `ask` choice.
 
@@ -175,7 +209,7 @@ After completing edits and reporting `Validation`, if this workflow produced unc
 Completion results, when recorded, go under:
 
 ```text
-docs/complete/YYYY-MM-DD-<topic>.md
+<artifact root>/complete/YYYY-MM-DD-<topic>.md
 ```
 
 Use the same `<topic>` as the saved plan when one exists; otherwise use a concise kebab-case task topic. If the workflow has a saved plan file, start the completion record with a link to that plan.
@@ -189,8 +223,8 @@ Present these Chinese options in this order. For options 2 and 3, include the co
 | Option | Meaning | Next action |
 |---|---|---|
 | 1. 提交 | 只提交本次完成的改动。 | Use `run` to inspect status, commit relevant changes, then report the commit hash. |
-| 2. 记录结果并提交 | 将完成结果保存到 `docs/complete/YYYY-MM-DD-<topic>.md`，然后提交。 | Use `edit` to create/update the completion record, use `run` to commit relevant changes, then report the result path and commit hash. |
-| 3. 记录结果 | 将完成结果保存到 `docs/complete/YYYY-MM-DD-<topic>.md`，但不提交。 | Use `edit` to create/update the completion record, then report the result path and state that changes remain uncommitted. |
+| 2. 记录结果并提交 | 将完成结果保存到 `<artifact root>/complete/YYYY-MM-DD-<topic>.md`，然后提交。 | Use `edit` to create/update the completion record, use `run` to commit relevant changes, then report the result path and commit hash. |
+| 3. 记录结果 | 将完成结果保存到 `<artifact root>/complete/YYYY-MM-DD-<topic>.md`，但不提交。 | Use `edit` to create/update the completion record, then report the result path and state that changes remain uncommitted. |
 | 4. 保持现状 | 不记录结果、不提交、不推送。 | Report changed files and validation evidence; state that changes remain uncommitted. |
 
 Completion record template:

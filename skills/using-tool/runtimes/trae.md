@@ -199,6 +199,15 @@ Typical inspection search:
 
 For MCP-backed checks, use `run_mcp` with the matching server and tool names. Do not claim validation without evidence. If a check was skipped, say it was skipped.
 
+## Coding Workflow Project Configuration
+
+For `coding-workflow` artifact-root persistence, the project-level configuration location is the repository-root `AGENTS.md`. In Trae, the user must enable **Settings > Rules > Include AGENTS.md in the context** for Trae to load this project rule file automatically.
+
+- Use `read` to inspect only this file for the managed block defined by `coding-workflow`.
+- If a resolved, validated root must be persisted and `AGENTS.md` does not exist, use `edit` to create it with only that managed block.
+- If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- coding-workflow:artifact-root:start -->` through `<!-- coding-workflow:artifact-root:end -->` when exactly one valid block is present.
+- Do not change content outside the managed block. Do not read or use `CLAUDE.md`, `.trae/rules/`, or any other file for this configuration.
+
 ## Trae Boundaries
 
 - Trae exposes a single `TodoWrite` tool, not the Claude Code `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` family. Translate tracking intent instead of copying the four-tool pattern.

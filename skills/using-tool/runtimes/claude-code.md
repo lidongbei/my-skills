@@ -182,6 +182,15 @@ Typical inspection search:
 
 Do not claim validation without evidence. If a check was skipped, say it was skipped.
 
+## Coding Workflow Project Configuration
+
+For `coding-workflow` artifact-root persistence, the project-level configuration location is the repository-root `CLAUDE.md`.
+
+- Use `read` to inspect only this file for the managed block defined by `coding-workflow`.
+- If a resolved, validated root must be persisted and `CLAUDE.md` does not exist, use `edit` to create it with only that managed block.
+- If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- coding-workflow:artifact-root:start -->` through `<!-- coding-workflow:artifact-root:end -->` when exactly one valid block is present.
+- Do not change content outside the managed block. Do not read or use `AGENTS.md`, `.trae/`, or any other file for this configuration.
+
 ## Claude Code Boundaries
 
 - Keep Claude Code frontmatter metadata such as `allowed-tools` as real tool names, not aliases.
