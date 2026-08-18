@@ -124,14 +124,14 @@ git diff -- skills/using-tool/runtimes/claude-code.md skills/using-tool/runtimes
 
 If no verifier exists, say what was manually inspected. Do not claim a missing verifier, task, or agent tool was called.
 
-## Coding Workflow Project Configuration
+## Shared Agent Output Configuration
 
-For `coding-workflow` artifact-root persistence, the project-level configuration location is the repository-root `AGENTS.md`.
+For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root `AGENTS.md`.
 
-- Use `read` to inspect only this file for the managed block defined by `coding-workflow`.
-- If a resolved, validated root must be persisted and `AGENTS.md` does not exist, use `edit` to create it with only that managed block.
-- If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- coding-workflow:artifact-root:start -->` through `<!-- coding-workflow:artifact-root:end -->` when exactly one valid block is present.
-- Do not change content outside the managed block. Do not read or use `CLAUDE.md`, `.trae/`, or any other file for this configuration.
+- Use `read` to inspect only this file for the managed block defined by the consuming skill: `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->`.
+- If a resolved, validated output root must be persisted and `AGENTS.md` does not exist, use `edit` to create it with only that managed block.
+- If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present.
+- Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not change content outside the shared managed block. Do not read or use `CLAUDE.md`, `.trae/`, or any other file for this configuration.
 
 ## Codex Boundaries
 
