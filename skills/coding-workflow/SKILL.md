@@ -152,13 +152,24 @@ The `ask` prompt must be:
 
 > 请选择实现执行模式：
 
-Present these Chinese options in this order without changing their existing semantics:
+Present these Chinese options in this order without changing the existing semantics of options 1–3:
 
-| Option | Meaning | Use when |
+| Option | Meaning | Use when / next action |
 |---|---|---|
 | 1. 主会话直接实现 | Main agent | Small, low-risk, few files |
 | 2. 单个子 agent 实现 | Single subagent | Medium, multi-file, or clean main context |
 | 3. 多个子 agent 分工 | Multiple subagents | Independent parallel subtasks |
+| 4. 修改已保存方案 | Revise saved plan | Do not implement. If changes were not supplied with the selection, ask for them; revise the working plan and `Self-Review`, then return to Step 3. |
+
+Only options 1, 2, and 3 authorize implementation. Option 4 is a plan-revision path, not implementation authorization. Do not edit implementation files, start implementation agents, create or enter an implementation worktree, or run implementation validation until the user explicitly selects option 1, 2, or 3, or explicitly specified an equivalent execution mode before this ask. Silence, “继续”, “尽快做”, “直接开始”, “确认”, generic approval, or any other non-equivalent wording is not implementation authorization.
+
+After the user chooses option 4:
+
+1. Stop the execution path. Do not perform any implementation step.
+2. If the user did not supply the requested changes with option 4, use `ask` to collect them.
+3. Use the saved plan file as the read-only source for a working plan. Revise the working plan's `Plan Conclusion` and `Self-Review`; the prior approval is no longer valid. Do not update the saved plan file yet.
+4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the artifact-root repository; do not amend or overwrite the prior plan commit.
+5. Ask the execution-mode question again. Do not implement until the user selects option 1, 2, or 3.
 
 Subagents are optional.
 
@@ -268,6 +279,8 @@ Do not commit, push, or write a completion record silently. If there are no unco
 | Testing every tiny edit | Use risk-sized validation |
 | Choosing execution mode silently | Use using-tool's `ask` action to make the user choose mode after approval unless already specified |
 | Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent`, `Single subagent`, or `Multiple subagents` |
+| Treating a saved plan as a commitment to implement | Offer `修改已保存方案`; if selected, return to plan revision and reapproval without implementing |
+| Starting implementation without a chosen mode | Only options 1, 2, and 3 authorize implementation; option 4, silence, generic approval, or “继续” do not |
 | Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
 | Completion without evidence | Report checks and results |
 | Treating isolated subagent work as done | Main agent must review, commit in the isolated worktree, bring the accepted commit into the main worktree, verify it there, and clean up the isolated worktree |
