@@ -12,7 +12,8 @@ disable-model-invocation: true
 
 - 只在用户明确调用本技能或明确要求使用本技能时执行；普通的 API 文档请求不自动触发本技能。
 - 生成前用 `read` 读取用户指定的参考文件，并用 `check` 确认它是合法 JSON；参考文件只作为结构样例，不能把其中的账号、token、Cookie、计划 ID、任务 ID、批次号或真实环境地址默认为新接口数据。
-- 缺少环境值时使用显式占位符，例如 `<<BASE_URL>>`、`<REQUIRED_PLAN_ID>`，并在完成报告中列出待替换项；不要为补齐字段凭空猜测业务值。
+- 生成前如果用户输入未明确提供 URL 基地址，先用 `ask` 询问一次并提供两个选项：**保留 `<<BASE_URL>>` 占位符（默认）**，或**用户输入**（可以是固定地址或其他占位符变量）。用户明确表示不知道或暂不提供时，按默认占位符处理并列入完成报告的待替换项；用户输入已明确提供基地址时直接使用，不再询问。
+- 其他环境值缺失时使用显式占位符，例如 `<REQUIRED_PLAN_ID>`，并在完成报告中列出待替换项；不要为补齐字段凭空猜测业务值。
 - 不调用真实接口、不生成响应示例、不推断参考文件没有提供的鉴权或业务规则。
 - 输出路径或文件名由用户明确指定时，优先使用用户路径。未指定完整输出路径时，使用共享 output root：按当前 runtime mapping 指定的项目级配置位置读取唯一有效的 `agent-output-root` managed block；有有效配置时，默认输出到 `<output root>/reqable/<collection-name>.reqable_collection.json`。`<collection-name>` 使用用户提供的 Collection 名称转换为 kebab-case；无法可靠得出名称时，才用 `ask` 询问文件名。
 - 当前 runtime 指定位置没有 managed block 时，首次需要写入输出文件前使用 `ask` 选择 output root 一次，并将默认 `<工作区上级目录>/<项目名>.agent` 标为推荐；验证后只在该位置追加 `agent-output-root` managed block。对本技能而言，有效 output root 必须是绝对路径，且为现有目录或可创建的目录；现有普通文件或不可创建的路径无效。若 managed block 损坏、重复或路径无效，不得静默修复、回退其它配置文件或覆盖配置；用 `ask` 要求用户修复。不得读取、识别、迁移或复用旧 `coding-workflow:artifact-root` block。
@@ -36,7 +37,7 @@ disable-model-invocation: true
 3. 文件夹保留 `id`、`items` 和 `properties`；API 保留参考中存在的结构字段：
    `id`、`type`、`name`、`method`、`url`、`headers`、`showInternalHeaders`、`body`、`script`、`authorization`、`documentation`、`settings`。
 4. 每个新节点生成合法且全局唯一的 UUID；不能复制参考节点 ID，也不能为了“看起来一样”复用同一个 ID。
-5. 原样保留用户明确提供的 URL、方法、参数名、请求头和示例值。URL 基地址可以使用 `<<BASE_URL>>` 等占位符。
+5. 原样保留用户明确提供的 URL、方法、参数名、请求头和示例值。URL 基地址使用用户确认的值（固定地址或占位符变量），或用户选择默认时的 `<<BASE_URL>>` 占位符。
 6. 区分普通 headers 与 Reqable 的 `internal: true` headers；不要删除或把内部头改成业务头。
 7. 有请求体时使用 `body.mode: "json"`，把对象、数组或字符串序列化为 `body.text`；无请求体时使用 `body.mode: "none"`。不要因为方法是 POST 就强行添加 body，也不要把数组改成对象。
 8. 仅在用户明确提供鉴权信息时填充鉴权；否则保留安全的 `authorization.mode: "inherit"` 或参考文件明确指定的模式。禁止写入真实凭据。
@@ -116,6 +117,7 @@ disable-model-invocation: true
 - 每个 API 有非空 `name`、合法 HTTP `method`、非空 `url.base`、数组类型 `headers` 和 `body`，并保留脚本、鉴权、说明及设置结构。
 - `body.mode` 只能是 `json` 或 `none`；`json` 模式的 `body.text` 再次解析后必须合法，`none` 模式不得凭空添加业务 body。
 - 未出现 token、密码、Cookie 或未获用户明确授权的环境专属值；所有占位符和未补字段都已列出。
+- 基地址与用户确认的值一致，或为用户选择默认时的 `<<BASE_URL>>` 占位符。
 - 若按参考文件完整复制结构，递归计数应为 4 个文件夹、23 个 API（除非用户明确要求增删）；不要只检查顶层节点。
 
 校验失败时不要写入或宣称已生成文件；先修正数据并重新校验。最终报告使用以下格式：
@@ -136,6 +138,7 @@ API：<数量>
 | 只遍历固定文件夹 | 递归处理每个 `items`，保留根级 API |
 | 所有接口都生成 POST 对象 body | 按输入保留方法及 `json`/`none`，支持数组 body |
 | 复制参考 UUID 或示例账号 | 生成新 UUID；账号和业务 ID 改为用户值或占位符 |
+| 未询问就直接写入 `<<BASE_URL>>` 占位符 | 生成前 `ask` 询问一次，提供保留默认占位符/用户输入两个选项 |
 | 手工拼接 JSON 字符串 | 使用序列化后再解析校验 |
 | 生成后直接声称成功 | 先完成结构、body、敏感信息和计数校验 |
 
@@ -145,5 +148,6 @@ API：<数量>
 - “为了省时间，所有接口统一 POST + JSON body。”
 - “Reqable 能容忍，校验可以省略。”
 - “用户没给地址，就替他们猜一个真实服务地址。”
+- “用户没给地址，直接写占位符不用问。”
 
 遇到这些想法，停止并回到对应的生成规则与校验步骤。
