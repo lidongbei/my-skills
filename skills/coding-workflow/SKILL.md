@@ -58,7 +58,7 @@ Paths under the output root:
 <output root>/complete/YYYY-MM-DD-<topic>.md
 ```
 
-Git: for `coding-workflow`, the output root must be a standalone git repository outside the working repository. Before first writing into it, run `git -C "<output root>" rev-parse --show-toplevel`. If it fails, run `git init` in the output root. If it resolves to a directory other than the output root, do not use or commit into that parent repository; use using-tool's `ask` action to require a separate output root. Commit plans and completion records in the output-root repository, not the working repository. This Git requirement applies only to `coding-workflow` plan and completion records; it does not require `generating-reqable-docs` outputs to be committed.
+Git: do not `git init` the output root automatically. Before writing into it, run `git -C "<output root>" rev-parse --show-toplevel`. If it resolves to a directory other than the output root, do not use or commit into that parent repository; use using-tool's `ask` action to require a separate output root. If the command fails, the output root currently has no git repository; the first time this happens in a session, use using-tool's `ask` action to ask the user whether to run `git init "<output root>"`. If the user agrees, run `git init` and treat the output root as a git repository for the rest of the session. If the user declines, do not run `git init` and do not ask again for the rest of the session. Commit plans and completion records in the output-root repository only when the output root is a git repository (the user agreed to initialize it or it already had one); otherwise skip the commit and treat it as ignored. Commit plans and completion records in the output-root repository, not the working repository. This Git requirement applies only to `coding-workflow` plan and completion records; it does not require `generating-reqable-docs` outputs to be committed.
 
 ### 1. Plan First
 
@@ -245,7 +245,7 @@ After explicit approval:
    - ordered steps, dependencies, invariants, and explicit non-changes are sufficient for a later agent to implement without re-deciding confirmed choices;
    - no unconfirmed fact is presented as a confirmed decision.
 3. Fix missing detail or ask the necessary question before saving. Do not save a summary-only plan.
-4. Commit the checked plan in the output-root repository (resolving and initializing it per the `Output Root` step), then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
+4. Commit the checked plan in the output-root repository if the output root is a git repository (per the `Output Root` step); if the output root has no git repository (the user declined initialization), skip the commit and treat it as ignored. Then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
 
 Do not ask the user to type `Main agent`, `Single subagent`, or `Multiple subagents` in free text. The execution mode choice must be a structured `ask` choice.
 
@@ -269,7 +269,7 @@ After the user chooses option 4:
 1. Stop the execution path. Do not perform any implementation step.
 2. If the user did not supply the requested changes with option 4, use `ask` to collect them.
 3. Use the saved plan file as the read-only source for a complete working plan. Revise every affected section, including `Requirements Traceability`, `Implementation Handoff`, `Key Decisions and Changes`, and `Self-Review`; the prior approval is no longer valid. Do not update the saved plan file yet.
-4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the artifact-root repository; do not amend or overwrite the prior plan commit.
+4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the output-root repository if the output root is a git repository (per the `Output Root` step); otherwise skip the commit. Do not amend or overwrite the prior plan commit.
 5. Ask the execution-mode question again. Do not implement until the user selects option 1, 2, or 3.
 
 Subagents are optional.
@@ -335,7 +335,7 @@ Present these Chinese options in this order. For options 2 and 3, include the co
 | Option | Meaning | Next action |
 |---|---|---|
 | 1. 提交 | 只提交本次完成的改动。 | Use `run` to inspect status, commit relevant changes, then report the commit hash. |
-| 2. 记录结果并提交 | 将完成结果保存到 `<output root>/complete/YYYY-MM-DD-<topic>.md`，然后提交。 | Use `edit` to create/update the completion record, use `run` to commit relevant changes, then report the result path and commit hash. |
+| 2. 记录结果并提交 | 将完成结果保存到 `<output root>/complete/YYYY-MM-DD-<topic>.md`，然后提交。 | Use `edit` to create/update the completion record, use `run` to commit relevant changes, then report the result path and commit hash. If the output root has no git repository (the user declined initialization), write the completion record but skip committing it, and report that fact. |
 | 3. 记录结果 | 将完成结果保存到 `<output root>/complete/YYYY-MM-DD-<topic>.md`，但不提交。 | Use `edit` to create/update the completion record, then report the result path and state that changes remain uncommitted. |
 | 4. 保持现状 | 不记录结果、不提交、不推送。 | Report changed files and validation evidence; state that changes remain uncommitted. |
 
