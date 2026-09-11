@@ -247,48 +247,33 @@ After explicit approval:
 3. Fix missing detail or ask the necessary question before saving. Do not save a summary-only plan.
 4. Commit the checked plan in the output-root repository if the output root is a git repository (per the `Output Root` step); if the output root has no git repository (the user declined initialization), skip the commit and treat it as ignored. Then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
 
-Do not ask the user to type `Main agent`, `Single subagent`, or `Multiple subagents` in free text. The execution mode choice must be a structured `ask` choice.
+Do not ask the user to type `Main agent` or `Multiple subagents` in free text. The execution mode choice must be a structured `ask` choice.
 
 The `ask` prompt must be:
 
 > 请选择实现执行模式：
 
-Present these Chinese options in this order without changing the existing semantics of options 1–3:
+Present these Chinese options in this order without changing the existing semantics of options 1–2:
 
 | Option | Meaning | Use when / next action |
 |---|---|---|
 | 1. 主会话直接实现 | Main agent | Small, low-risk, few files |
-| 2. 单个子 agent 实现 | Single subagent | Medium, multi-file, or clean main context |
-| 3. 多个子 agent 分工 | Multiple subagents | Independent parallel subtasks |
-| 4. 修改已保存方案 | Revise saved plan | Do not implement. If changes were not supplied with the selection, ask for them; revise the complete working plan, then return to Step 3. |
+| 2. 多个子 agent 分工 | Multiple subagents | Independent parallel subtasks |
+| 3. 修改已保存方案 | Revise saved plan | Do not implement. If changes were not supplied with the selection, ask for them; revise the complete working plan, then return to Step 3. |
 
-Only options 1, 2, and 3 authorize implementation. Option 4 is a plan-revision path, not implementation authorization. Do not edit implementation files, start implementation agents, create or enter an implementation worktree, or run implementation validation until the user explicitly selects option 1, 2, or 3, or explicitly specified an equivalent execution mode before this ask. Silence, “继续”, “尽快做”, “直接开始”, “确认”, generic approval, or any other non-equivalent wording is not implementation authorization.
+Only options 1 and 2 authorize implementation. Option 3 is a plan-revision path, not implementation authorization. Do not edit implementation files, start implementation agents, or run implementation validation until the user explicitly selects option 1 or 2, or explicitly specified an equivalent execution mode before this ask. Silence, “继续”, “尽快做”, “直接开始”, “确认”, generic approval, or any other non-equivalent wording is not implementation authorization.
 
-After the user chooses option 4:
+After the user chooses option 3:
 
 1. Stop the execution path. Do not perform any implementation step.
 2. If the user did not supply the requested changes with option 4, use `ask` to collect them.
 3. Use the saved plan file as the read-only source for a complete working plan. Revise every affected section, including `Requirements Traceability`, `Implementation Handoff`, `Key Decisions and Changes`, and `Self-Review`; the prior approval is no longer valid. Do not update the saved plan file yet.
 4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the output-root repository if the output root is a git repository (per the `Output Root` step); otherwise skip the commit. Do not amend or overwrite the prior plan commit.
-5. Ask the execution-mode question again. Do not implement until the user selects option 1, 2, or 3.
+5. Ask the execution-mode question again. Do not implement until the user selects option 1 or 2.
 
 Subagents are optional.
 
-### 6. Single Subagent Worktree Lifecycle
-
-Use this subsection when execution mode is “单个子 agent 实现” and the subagent works in an isolated worktree.
-
-Required lifecycle:
-
-1. Use `agent` to request a candidate implementation in the isolated worktree. Give the agent the saved plan path and require it to `read` the entire plan before implementation. The agent must treat `Requirements Traceability`, `Key Decisions and Changes`, `Implementation Handoff`, and the deviation protocol as implementation constraints, not suggestions. Its return must include: fulfilled requirements/acceptance conditions; changed files and symbols; protected scopes left unchanged; every plan deviation (or `None`); and validation evidence. It must not claim the main worktree was changed.
-2. Use `check` to review the returned result before accepting it: inspect the diff and summary, compare them with the approved plan and its traceability rows, verify each confirmed decision and protected scope was honored, and decide whether the candidate is accepted, needs revision, is returned to plan revision, or is discarded. Reject any unapproved material deviation or scope expansion.
-3. If accepted, create an implementation commit in the isolated worktree before bringing the work back. Do not merge uncommitted worktree changes into the main worktree.
-4. Use `run` / `check` to merge or otherwise bring that commit into the main worktree, then verify the main worktree contains the expected commit and files.
-5. After the main worktree has the accepted commit, clean up the isolated worktree. If cleanup is not possible in the runtime, report the leftover worktree path or limitation explicitly.
-
-Do not treat “subagent finished in an isolated worktree” as completion. Completion means the accepted commit is present in the main worktree, validation evidence is reported, and the isolated worktree has been cleaned up or the cleanup limitation has been disclosed.
-
-### 7. Risk-Sized Loops
+### 6. Risk-Sized Loops
 
 A step is small enough to identify responsibility and large enough to deserve validation.
 
@@ -300,7 +285,7 @@ A step is small enough to identify responsibility and large enough to deserve va
 
 Use narrow validation first when full validation is expensive. Before completion claims, task switches, or implementation commits, validate strongly enough to support the claim.
 
-### 8. Evidence Before Completion Claims
+### 7. Evidence Before Completion Claims
 
 Final reports must include:
 
@@ -314,7 +299,7 @@ Final reports must include:
 
 Say “not validated” or “validation failed” when true. Do not claim completion with “should be fixed,” “looks fine,” or no evidence.
 
-### 9. Post-Validation Completion Gate
+### 8. Post-Validation Completion Gate
 
 After completing edits and reporting `Validation`, if this workflow produced uncommitted file changes and the user has not already specified the completion action, stop and use using-tool's `ask` action.
 
@@ -379,15 +364,14 @@ Do not commit, push, or write a completion record silently. If there are no unco
 | Heavy ceremony | Keep lightweight |
 | Testing every tiny edit | Use risk-sized validation |
 | Choosing execution mode silently | Use using-tool's `ask` action to make the user choose mode after approval unless already specified |
-| Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent`, `Single subagent`, or `Multiple subagents` |
+| Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent` or `Multiple subagents` |
 | Treating a saved plan as a commitment to implement | Offer `修改已保存方案`; if selected, return to plan revision and reapproval without implementing |
-| Starting implementation without a chosen mode | Only options 1, 2, and 3 authorize implementation; option 4, silence, generic approval, or “继续” do not |
+| Starting implementation without a chosen mode | Only options 1 and 2 authorize implementation; option 3, silence, generic approval, or “继续” do not |
 | Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
 | Saving a summary-only plan | Save the complete handoff plan with evidence anchors, traceability, implementation constraints, validation, and key decisions |
 | Leaving confirmed decisions only in chat | Record every implementation-affecting confirmed decision in `Key Decisions and Changes` with source and impact |
 | Letting an implementation agent re-decide confirmed choices | Require it to read the saved plan and honor traceability, invariants, explicit non-changes, and the deviation protocol |
 | Accepting a silent implementation deviation | Compare the candidate against traceability rows and reject or return to plan revision when a material deviation lacks approval |
 | Completion without evidence | Report checks and results |
-| Treating isolated subagent work as done | Main agent must review, commit in the isolated worktree, bring the accepted commit into the main worktree, verify it there, and clean up the isolated worktree |
 | Ending with uncommitted changes | After validation, use the post-validation completion gate to offer commit / record result and commit / record result / keep current state |
 | Over-exploring simple tasks | Match search tool to task scope; run one `find` (Grep or MCP `search_code`) before dispatching `agent` (Explore); reserve `agent` for genuinely cross-module or uncertain-scope investigation |
