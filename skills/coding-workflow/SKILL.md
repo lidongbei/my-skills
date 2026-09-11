@@ -30,7 +30,7 @@ Plan and completion records are saved under a configurable **output root**, not 
 
 Default output root: the parent of the current repository root plus `<project name>.agent`, where `<project name>` is the repository directory name. Example: repository `D:\AI\my-skills` → default `D:\AI\my-skills.agent`.
 
-Each runtime mapping defines one project-level location for shared output-root configuration. Read and update only that location; do not guess, scan, or modify other instruction/configuration files. The managed configuration block is:
+Each runtime mapping defines one project-level location for shared output-root configuration. Read and update only that location; do not guess, scan, or modify other instruction/configuration files. The managed configuration block lives in the git-ignored local markdown file designated by the runtime mapping (`.agents/my-skills-local-config.md`):
 
 ```markdown
 <!-- agent-output-root:start -->

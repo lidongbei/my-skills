@@ -228,6 +228,24 @@ Typical inspection search:
 
 For MCP-backed checks, discover tools with `tool_search`, inspect schemas with `tool_describe`, then execute with `tool_call`. For scheduled-task verification, use `cronList`. For image-based verification, use `analyzeImage`. Do not claim validation without evidence. If a check was skipped, say it was skipped.
 
+## Shared Agent Output Configuration
+
+For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.agents/my-skills-local-config.md`. The consuming skill reads/writes this managed block:
+
+```markdown
+<!-- agent-output-root:start -->
+## Agent Output Configuration
+
+- Output root: `<absolute path>`
+<!-- agent-output-root:end -->
+```
+
+- Use `read` to inspect only this file for the managed block defined by the consuming skill.
+- If a resolved, validated output root must be persisted and the file does not exist, use `write` (via `edit`) to create the `.agents/` directory and a file containing exactly that managed block.
+- If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present. Preserve all content outside that block.
+- `.agents/` is git-ignored: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`.
+- Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not read or use `CLAUDE.md`, `AGENTS.md`, `.codeartsdoer/rules/`, or any other file for this configuration.
+
 ## CodeArts Boundaries
 
 - CodeArts exposes a single `todowrite` tool, not the Claude Code `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` family. Translate tracking intent instead of copying the four-tool pattern.

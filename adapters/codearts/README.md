@@ -67,6 +67,10 @@ skills/using-tool/runtimes/codearts.md
 
 That runtime file maps portable tool-action aliases (`ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, `check`) to CodeArts tools such as `question`, `read`, `glob`, `grep`, `edit`, `write`, `deleteFile`, `bash`, `todowrite`, `task`, `webfetch`, `CodeSemanticSearch`, `CodeGraphSearch`, `RagSearch`, `analyzeImage`, `skill`, `cronCreate`/`cronDelete`/`cronList`, and `tool_search`/`tool_describe`/`tool_call`.
 
+## Output Root Configuration
+
+`coding-workflow` and `generating-reqable-docs` share an output root. The value is machine-specific and stored per-developer in the git-ignored `.agents/my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. It is never written into the shared `CLAUDE.md`/`AGENTS.md` or `.codeartsdoer/`.
+
 ## CodeArts-Specific Capabilities
 
 CodeArts provides several tools that have no direct equivalent in Claude Code, Codex, or Trae:

@@ -184,12 +184,21 @@ Do not claim validation without evidence. If a check was skipped, say it was ski
 
 ## Shared Agent Output Configuration
 
-For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root `CLAUDE.md`.
+For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.agents/my-skills-local-config.md`. The consuming skill reads/writes this managed block:
 
-- Use `read` to inspect only this file for the managed block defined by the consuming skill: `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->`.
-- If a resolved, validated output root must be persisted and `CLAUDE.md` does not exist, use `edit` to create it with only that managed block.
-- If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present.
-- Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not change content outside the shared managed block. Do not read or use `AGENTS.md`, `.trae/`, or any other file for this configuration.
+```markdown
+<!-- agent-output-root:start -->
+## Agent Output Configuration
+
+- Output root: `<absolute path>`
+<!-- agent-output-root:end -->
+```
+
+- Use `read` to inspect only this file for the managed block defined by the consuming skill.
+- If a resolved, validated output root must be persisted and the file does not exist, use `edit` to create the `.agents/` directory and a file containing exactly that managed block.
+- If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present. Preserve all content outside that block.
+- `.agents/` is git-ignored: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`.
+- Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not read or use `CLAUDE.md`, `AGENTS.md`, `.trae/`, or any other file for this configuration.
 
 ## Claude Code Boundaries
 

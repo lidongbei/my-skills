@@ -49,3 +49,7 @@ skills/using-tool/runtimes/codex.md
 That runtime file maps portable tool-action instructions to Codex tools or interaction patterns, including usage examples, parameters where applicable, and fallbacks.
 
 Use each skill's intent and workflow, not necessarily its exact Claude Code tool names or parameter formats.
+
+## Output Root Configuration
+
+`coding-workflow` and `generating-reqable-docs` share an output root. The value is machine-specific and stored per-developer in the git-ignored `.agents/my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. It is never written into the shared `AGENTS.md`.

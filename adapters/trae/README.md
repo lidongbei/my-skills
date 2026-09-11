@@ -45,6 +45,10 @@ skills/using-tool/runtimes/trae.md
 
 That runtime file maps portable tool-action aliases (`ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, `check`) to Trae IDE tools such as `Read`, `Edit`, `Write`, `Glob`, `Grep`, `LS`, `SearchCodebase`, `WebFetch`, `WebSearch`, `RunCommand`, `CheckCommandStatus`, `StopCommand`, `TodoWrite`, `Task`, `AskUserQuestion`, and `run_mcp`. It also documents the boundaries (single `TodoWrite` tool, `Task` subagent types `general_purpose_task` / `search` / `browser_use`, sandboxed PowerShell terminal).
 
+## Output Root Configuration
+
+`coding-workflow` and `generating-reqable-docs` share an output root. The value is machine-specific and stored per-developer in the git-ignored `.agents/my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. It is never written into the shared `AGENTS.md` or `.trae/`.
+
 ## Policy
 
 `D:\AI\my-skills` is the source project for this single plugin. Avoid duplicating the skills into a second location; if a copy is required, sync it back from this repository rather than editing it in place.
