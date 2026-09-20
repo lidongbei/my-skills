@@ -153,6 +153,12 @@ Use `Agent` for independent exploration, review, or delegated work. Typical shap
 }
 ```
 
+Default to blocking dispatch (`run_in_background: false`) and consume the result inside the same turn. `Agent` returns an agent handle immediately when run in the background; if the coordinator then has no further work and the turn ends, the only way it is re-invoked is the harness-injected completion notification, and that chain breaks if the process exits. Use `run_in_background: true` only when there is concrete work to do in the same turn while the subagent runs — never as the final action of a turn.
+
+When several independent subagents are needed, send them in one message as multiple `Agent` calls so they run concurrently; the coordinator still waits for all of them within the turn.
+
+Do not close a turn with an outstanding background agent whose result the next step depends on. `SendMessage` with a recorded agent id resumes a stopped agent with its transcript intact, and `TaskOutput` reads a background task's output, but neither can recover a result that was never written durably.
+
 Use `Workflow` only when the user explicitly opts into multi-agent orchestration, for example by asking to “use a workflow”, “fan out agents”, or using the session's workflow opt-in keyword. Do not translate a generic `agent` instruction into `Workflow` by default.
 
 ### `check`

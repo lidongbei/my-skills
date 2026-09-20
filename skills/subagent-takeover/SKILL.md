@@ -21,6 +21,8 @@ Core principle: the saved plan is the only source of truth. Subagents do not re-
 - Do not edit the saved plan file. It is read-only for this skill. To revise the plan, return to `coding-workflow` Step 3 (修改已保存方案).
 - Do not dispatch any subagent before the subtask document is approved by the user through the mandatory review gate.
 - Do not claim a subtask complete based on a subagent's self-report alone. The coordinator must `check` the returned structured feedback against the corresponding traceability row.
+- Never dispatch a subagent and then end the turn on a bare agent handle. There is no blocking-wait primitive for external work: the coordinator is only re-invoked when the runtime injects a completion event, and an exited process breaks that notification chain. Dispatch blocking per Step 4, and never close with a row still in `dispatched` state.
+- Never treat a subagent's final message as a durable artifact. The message arrives through the same completion notification, so it is lost with the process. The feedback file on disk is the only record the coordinator may validate from.
 - When invoked by the user directly rather than routed from `coding-workflow`, the approved saved plan requirement still applies: without it, stop and ask the user to run `coding-workflow` first.
 
 ## Output Root
@@ -41,7 +43,10 @@ Paths under the output root for this skill:
 
 ```text
 <output root>/subTasks/YYYY-MM-DD-<topic>.md
+<output root>/subTasks/YYYY-MM-DD-<topic>/SUB-<nn>-feedback.md
 ```
+
+The per-subtask feedback files are durable records, not scratch output. They must survive the coordinator process and be written by the subagent itself; see Step 5 and the Resume Protocol.
 
 Git: apply the same output-root git rule as `coding-workflow`. Commit the subtask document in the output-root repository only when the output root is a git repository; otherwise skip the commit and treat it as ignored. Do not commit into the working repository.
 
@@ -94,6 +99,16 @@ For each subtask, use `agent` to dispatch one subagent. The dispatch is governed
 - Subtasks with no dependencies may be dispatched in parallel.
 - A subtask with a dependency is dispatched only after its predecessor's feedback has been `check`-ed and accepted.
 
+**Dispatch must be blocking.** Dispatch and wait for the result in the same turn; do not dispatch background subagents and then end the turn on the returned agent handles. There is no blocking-wait primitive for external work in this architecture — the coordinator is only re-invoked when the runtime injects a completion event, and an exited process breaks that chain, so a background dispatch followed by a silent turn end can lose the subtask's result and the rest of the flow permanently.
+
+Rules:
+
+1. Parallel independent subtasks go in ONE message as multiple `agent` calls (one call per subtask), dispatched together, so they run concurrently while the coordinator is still inside the same turn.
+2. For each dispatch, set the runtime's blocking form: in Claude Code, `run_in_background: false`. Background dispatch (`run_in_background: true`) is allowed only when the coordinator still has other concrete work to do in the same turn before consuming the result — never as the final action of a turn.
+3. Record every dispatch in the subtask document's `Subtask Status` table before relying on its result: agent handle, dispatch time, and state `dispatched`. Update the row to `feedback-received` as each feedback file lands.
+4. If an `agent` call returns no usable result or the subagent dies, do not end the turn silently. Apply the Resume Protocol below.
+5. Never end a turn, and never report progress to the user, while any row is still `dispatched` with no feedback file on disk.
+
 Each subagent dispatch prompt MUST contain, at minimum:
 
 1. The subtask id, title, and goal.
@@ -103,12 +118,17 @@ Each subagent dispatch prompt MUST contain, at minimum:
 5. The validation target and acceptance condition.
 6. The instruction: "You may use `read`, `find`, `edit`, `run`, and `check` as needed to complete this subtask. Do not re-decide confirmed choices. If source evidence contradicts the subtask, stop and report the contradiction instead of improvising."
 7. The required structured feedback contract (see Step 5) the subagent must return in its final message.
+8. The instruction: "Before your final message, use `edit` to WRITE the structured feedback block to the absolute path `<output root>/subTasks/YYYY-MM-DD-<topic>/SUB-<nn>-feedback.md`. The file must contain the complete block, not a summary or a pointer. Write the file even if you are blocked or partial. Then return the same block in your final message. The file is the durable record; the message may be lost."
 
 Do not give a subagent freedom to change scope, contracts, or explicit non-changes. If a subagent reports a contradiction or a prerequisite unavailable, stop that subtask and return to the plan-revision path via `coding-workflow` Step 3.
 
 ### 5. Receive And Validate Structured Feedback
 
 Every subagent MUST return its final result as this structured feedback. A subagent that returns prose without this structure is treated as incomplete.
+
+Durable record first: the authoritative feedback is the file `<output root>/subTasks/YYYY-MM-DD-<topic>/SUB-<nn>-feedback.md` written by the subagent, not its final message. Read the file with `read` before validating. If the message and the file disagree, the file wins only when it is the more complete record; if either is missing or truncated, treat the subtask as `partial` or `blocked` and apply the Resume Protocol instead of guessing.
+
+If the process never re-invoked the coordinator, the feedback file still exists on disk. Recovery never depends on the coordinator's in-memory agent handle.
 
 ```markdown
 ## Subagent Feedback
@@ -149,6 +169,19 @@ After all subtasks are `check`-ed and accepted:
 
 Do not claim completion with "should be fixed", "looks fine", or no evidence. Do not let a subagent's "completed" status override a failed coordinator `check`.
 
+### 7. Resume Protocol
+
+Use this whenever the coordinator is re-invoked after an interruption, or when a row is stuck in `dispatched` with no feedback file, or when a subagent died mid-write.
+
+1. Use `read` on `<output root>/subTasks/YYYY-MM-DD-<topic>.md` to recover the subtask and `Subtask Status` state. Never rely on remembered state; a new coordinator invocation may start with no context.
+2. For each row not yet `completed`, use `find`/`read` to check whether `<output root>/subTasks/YYYY-MM-DD-<topic>/SUB-<nn>-feedback.md` exists and is a complete block.
+3. If a complete feedback file exists, validate it per Step 5 and update the row. Do not re-dispatch a subtask whose feedback file is complete and valid.
+4. If the file is missing or truncated, re-dispatch that subtask only. Prefer `SendMessage` with the recorded agent handle to resume the existing agent with its transcript intact; if the agent is gone, dispatch a fresh subagent with the same subtask prompt. Re-dispatching is safe only after `check`-ing what already landed on disk, so a partially applied change is not duplicated.
+5. Never re-dispatch a subtask whose changes you have not inspected. A dead subagent may have left a half-applied edit.
+6. After recovery, continue the normal Step 4 → Step 5 → Step 6 flow. Record the interruption and the recovery action in the subtask document's `Coordinator Validation Summary`.
+
+A subtask document alone is not enough to prevent this failure. The three defenses are: blocking dispatch (Step 4), the on-disk feedback file (Step 5), and this re-entry protocol. All three are required; removing any one re-opens the same loss.
+
 ## Required Subtask Document Template
 
 Every subtask document must use this structure. Unknown content must be written as `未知，需复核`; do not omit the section.
@@ -188,14 +221,17 @@ Plan: [<plan title>](../plans/YYYY-MM-DD-<topic>.md)
   - <command or check> — <acceptance condition>
 - Dependencies:
   - <none, or SUB-<mm> must be completed and accepted first>
-- Dispatch prompt: <the full prompt sent to the subagent, including the structured feedback contract>
+- Feedback file: `<output root>/subTasks/YYYY-MM-DD-<topic>/SUB-<nn>-feedback.md`
+- Dispatch prompt: <the full prompt sent to the subagent, including the structured feedback contract and the feedback-file write instruction>
 
 ## Subtask Status
 
-| Subtask | Status | Validation evidence | Deviation | Notes |
-|---|---|---|---|---|
-| SUB-01 | pending | — | — | — |
-| SUB-02 | pending | — | — | — |
+`State` is the dispatch lifecycle: `pending` → `dispatched` → `feedback-received` → `completed`. A row must never be left in `dispatched` at the end of a turn, and `completed` requires a validated feedback file.
+
+| Subtask | State | Agent handle | Dispatched at | Validation evidence | Deviation | Notes |
+|---|---|---|---|---|---|---|
+| SUB-01 | pending | — | — | — | — | — |
+| SUB-02 | pending | — | — | — | — | — |
 
 ## Review Gate
 
@@ -235,6 +271,10 @@ The structured feedback block in Step 5 is a REQUIRED field of the subtask's fin
 | Accepting a silent deviation | Compare against invariants; reject or return to plan revision |
 | Completion without evidence | Report Ran / Result / Not run / Reason per `coding-workflow` Step 7 |
 | Editing the saved plan | The plan is read-only; to revise, return to `coding-workflow` Step 3 |
+| Dispatching background subagents, then ending the turn | Dispatch blocking (`run_in_background: false`) and consume the result in the same turn |
+| Treating the subagent's final message as the record | Require the on-disk feedback file; validate from the file, not the message |
+| Leaving a row in `dispatched` with no feedback file | Apply the Resume Protocol before ending the turn or reporting progress |
+| Re-dispatching after an interruption without checking disk | Inspect what landed first; a dead subagent may have left a half-applied edit |
 
 ## Red Flags - STOP
 
@@ -243,5 +283,8 @@ The structured feedback block in Step 5 is a REQUIRED field of the subtask's fin
 - "这个子任务有依赖，但先并行派了再说" — no, honor `Dependencies`.
 - "拆分时发现方案有问题，我自己改一下方案" — no, return to `coding-workflow` Step 3.
 - "审阅太慢，先派发再补审阅" — no, the review gate is mandatory before any dispatch.
+- "先后台派发，等通知来了再收" — no, dispatch blocking; there is no guarantee the waiting process survives to receive the notification.
+- "子 agent 消息里有反馈就够了" — no, require the on-disk feedback file; the message dies with the process.
+- "主 Agent 断了就重跑整个skill" — no, run the Resume Protocol and recover from `Subtask Status` plus the feedback files.
 
 遇到这些想法，停止并回到对应的工作流步骤。
