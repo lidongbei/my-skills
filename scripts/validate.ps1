@@ -7,7 +7,7 @@ $PluginManifest = Join-Path $Root '.claude-plugin\plugin.json'
 $MarketplaceManifest = Join-Path $Root '.claude-plugin\marketplace.json'
 $SkillsIndex = Join-Path $Root 'skills-index.md'
 $UserOnlySkills = @('coding-workflow', 'generating-reqable-docs', 'idea-shaping', 'session-handoff-load', 'session-handoff-save', 'team-memory', 'writing-skills')
-$ModelInvocableSkills = @('using-tool')
+$ModelInvocableSkills = @('subagent-takeover', 'using-tool')
 $AllowedSkills = @($UserOnlySkills + $ModelInvocableSkills)
 $errors = @()
 

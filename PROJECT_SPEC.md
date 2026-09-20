@@ -18,13 +18,14 @@ skills/<skill-name>/SKILL.md
 
 ## Current Skills
 
-This plugin currently contains eight skills:
+This plugin currently contains nine skills:
 
 - `coding-workflow`
 - `team-memory`
 - `idea-shaping`
 - `session-handoff-save`
 - `session-handoff-load`
+- `subagent-takeover`
 - `writing-skills`
 - `generating-reqable-docs`
 - `using-tool`
@@ -55,6 +56,7 @@ Rules:
 - `description` for user-only skills must require explicit invocation and must not use broad semantic task categories as auto-trigger descriptions.
 - `description` for model-invocable skills must start with `Use when`, stay trigger-focused, and avoid workflow summaries.
 - Existing user-only skills use user-only mode with `disable-model-invocation: true`.
+- `subagent-takeover` is model-invocable by user decision so `coding-workflow` can route to it after the user selects the multiple-subagents execution mode. Its description must stay narrowly trigger-focused: both the routing case and explicit user invocation are named, and no generic task category is used as a trigger.
 - `using-tool` is model-invocable by user decision, is mandatory before using any skill from this plugin, and must not include `disable-model-invocation: true`.
 - User-only means the model must not invoke the skill on its own through the runtime `Skill` tool; a user slash-command invocation is still valid.
 - If a user explicitly invokes a user-only skill and the runtime `Skill` tool rejects it because of `disable-model-invocation: true`, the agent should read `skills/<skill-name>/SKILL.md` directly and follow it instead of treating the user invocation as invalid.
@@ -87,7 +89,7 @@ Validation must fail if:
 - `skills/` is missing.
 - A direct child of `skills/` lacks `SKILL.md`.
 - `skills/plugins` exists.
-- Any direct skill directory other than `coding-workflow`, `generating-reqable-docs`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, `writing-skills`, or `using-tool` exists.
+- Any direct skill directory other than `coding-workflow`, `generating-reqable-docs`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, `subagent-takeover`, `writing-skills`, or `using-tool` exists.
 - A skill frontmatter `name` is missing or does not match its directory.
 - A user-only skill frontmatter `description` is missing, blank, or does not require explicit invocation.
 - A model-invocable skill frontmatter `description` is missing, blank, or does not start with `Use when`.

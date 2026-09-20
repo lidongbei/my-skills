@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "my-skills",
-      "description": "Personal agent skills plugin containing coding-workflow, team-memory, idea-shaping, session-handoff-save, session-handoff-load, writing-skills, generating-reqable-docs, and mandatory runtime adapter using-tool.",
+      "description": "Personal agent skills plugin containing coding-workflow, team-memory, idea-shaping, session-handoff-save, session-handoff-load, subagent-takeover, writing-skills, generating-reqable-docs, and mandatory runtime adapter using-tool.",
       "version": "0.1.0",
       "source": "./",
       "author": {

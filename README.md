@@ -1,6 +1,6 @@
 # my-skills
 
-`my-skills` is a single Claude Code plugin that packages eight agent skills.
+`my-skills` is a single Claude Code plugin that packages nine agent skills.
 
 The plugin root is this repository. Its canonical plugin manifest is:
 
@@ -15,6 +15,7 @@ Included skills:
 - `idea-shaping`
 - `session-handoff-save`
 - `session-handoff-load`
+- `subagent-takeover`
 - `writing-skills`
 - `generating-reqable-docs`
 - `using-tool`
@@ -56,6 +57,7 @@ List loaded plugins:
 Invocation modes:
 
 - `coding-workflow`, `generating-reqable-docs`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
+- `subagent-takeover` is model-invocable so `coding-workflow` can route to it after the user selects the multiple-subagents execution mode. It still runs only on that route or on explicit user invocation, never from a generic task category.
 - `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
 
 Examples:
@@ -88,6 +90,7 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
 | `session-handoff-save` | user-only | You explicitly want to save a temporary current-session handoff for a future session. |
 | `session-handoff-load` | user-only | You explicitly want to choose and load an indexed temporary session handoff. |
+| `subagent-takeover` | model-invocable (routed from `coding-workflow` or explicit invocation) | You selected the multiple-subagents execution mode in `coding-workflow`, or you explicitly want to split an approved plan into human-reviewed subtasks and dispatch validated subagents. |
 | `writing-skills` | user-only | You explicitly want to create, diagnose, edit, or verify skills with a TDD-style process. |
 | `using-tool` | model-invocable | Before using any skill from this plugin, to adapt portable tool-use instructions to the current runtime. |
 
@@ -119,7 +122,7 @@ Install with another Claude Code scope:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -Scope project
 ```
 
-The script validates the repository, registers its local marketplace, and runs Claude Code's native `plugin install` command. It installs one `my-skills` plugin containing all eight skills; it does not copy separate skill directories into `~/.claude/skills`.
+The script validates the repository, registers its local marketplace, and runs Claude Code's native `plugin install` command. It installs one `my-skills` plugin containing all nine skills; it does not copy separate skill directories into `~/.claude/skills`.
 
 Inspect or remove the persistent installation with Claude Code's native commands:
 
@@ -191,6 +194,8 @@ my-skills/
 │   ├── session-handoff-load/
 │   │   └── SKILL.md
 │   ├── session-handoff-save/
+│   │   └── SKILL.md
+│   ├── subagent-takeover/
 │   │   └── SKILL.md
 │   ├── team-memory/
 │   │   ├── SKILL.md

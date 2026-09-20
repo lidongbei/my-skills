@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 ## Overview
 
-Plan first, work in risk-sized loops, and claim completion only with evidence. Lightweight: no full TDD, mandatory reviews, branch finishing, or required subagents.
+Plan first, work in risk-sized loops, and claim completion only with evidence. Lightweight: no full TDD, mandatory reviews, or branch finishing. Multiple-subagent execution is owned by the separate `subagent-takeover` skill, not this workflow.
 
 ## Hard Boundaries
 
@@ -253,25 +253,25 @@ The `ask` prompt must be:
 
 > 请选择实现执行模式：
 
-Present these Chinese options in this order without changing the existing semantics of options 1–2:
+Present these Chinese options in this order without changing the existing semantics of options 1–3:
 
 | Option | Meaning | Use when / next action |
 |---|---|---|
 | 1. 主会话直接实现 | Main agent | Small, low-risk, few files |
-| 2. 多个子 agent 分工 | Multiple subagents | Independent parallel subtasks |
+| 2. 多个子 agent 分工 | Route to `subagent-takeover` | Independent parallel subtasks. Do not dispatch inline; hand off to `subagent-takeover` immediately after this step. |
 | 3. 修改已保存方案 | Revise saved plan | Do not implement. If changes were not supplied with the selection, ask for them; revise the complete working plan, then return to Step 3. |
 
 Only options 1 and 2 authorize implementation. Option 3 is a plan-revision path, not implementation authorization. Do not edit implementation files, start implementation agents, or run implementation validation until the user explicitly selects option 1 or 2, or explicitly specified an equivalent execution mode before this ask. Silence, “继续”, “尽快做”, “直接开始”, “确认”, generic approval, or any other non-equivalent wording is not implementation authorization.
 
+If the user chooses option 2, route to `subagent-takeover` immediately after this step by loading it with the runtime `Skill` tool (`Skill(skill: "my-skills:subagent-takeover")`) and then following its instructions: the coordinator skill reads this saved plan, splits it into a human-reviewable `<output root>/subTasks/YYYY-MM-DD-<topic>.md` document, waits for user approval, then dispatches and validates subagents. Do not ask the user to invoke `/subagent-takeover` again; this selection is the routing authorization. Do not perform subagent dispatch, splitting, or structured-feedback validation inline here; hand off to `subagent-takeover` and let it own that flow. If the runtime `Skill` tool cannot load it, read `skills/subagent-takeover/SKILL.md` directly and follow it.
+
 After the user chooses option 3:
 
 1. Stop the execution path. Do not perform any implementation step.
-2. If the user did not supply the requested changes with option 4, use `ask` to collect them.
+2. If the user did not supply the requested changes with the selection, use `ask` to collect them.
 3. Use the saved plan file as the read-only source for a complete working plan. Revise every affected section, including `Requirements Traceability`, `Implementation Handoff`, `Key Decisions and Changes`, and `Self-Review`; the prior approval is no longer valid. Do not update the saved plan file yet.
 4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the output-root repository if the output root is a git repository (per the `Output Root` step); otherwise skip the commit. Do not amend or overwrite the prior plan commit.
 5. Ask the execution-mode question again. Do not implement until the user selects option 1 or 2.
-
-Subagents are optional.
 
 ### 6. Risk-Sized Loops
 
@@ -359,12 +359,12 @@ Do not commit, push, or write a completion record silently. If there are no unco
 | Mistake | Correction |
 |---|---|
 | Immediate edits | Plan and self-review first |
-| Treating plan output as approval | After plan and self-review, present the mandatory three-option response gate and wait |
+| Treating plan output as approval | After plan and self-review, present the mandatory response gate and wait |
 | Guessed cause as fact | Mark uncertainty or investigate |
 | Heavy ceremony | Keep lightweight |
 | Testing every tiny edit | Use risk-sized validation |
 | Choosing execution mode silently | Use using-tool's `ask` action to make the user choose mode after approval unless already specified |
-| Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent` or `Multiple subagents` |
+| Asking for execution mode as free text | Use structured `ask` options; do not require the user to type `Main agent` |
 | Treating a saved plan as a commitment to implement | Offer `修改已保存方案`; if selected, return to plan revision and reapproval without implementing |
 | Starting implementation without a chosen mode | Only options 1 and 2 authorize implementation; option 3, silence, generic approval, or “继续” do not |
 | Saving before resolving decisions | Review human-required decisions after plan approval and resolve them before saving or committing |
