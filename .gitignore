@@ -1,5 +1,7 @@
 # IDE / editor state
 .trae/
+.idea/
 
 # Per-developer local agent configuration (machine-specific output root etc.)
 .agents/
+

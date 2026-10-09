@@ -90,7 +90,7 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
 | `session-handoff-save` | user-only | You explicitly want to save a temporary current-session handoff for a future session. |
 | `session-handoff-load` | user-only | You explicitly want to choose and load an indexed temporary session handoff. |
-| `subagent-takeover` | model-invocable (routed from `coding-workflow` or explicit invocation) | You selected the multiple-subagents execution mode in `coding-workflow`, or you explicitly want to split an approved plan into human-reviewed subtasks and dispatch validated subagents. |
+| `subagent-takeover` | model-invocable (routed from `coding-workflow` or explicit invocation) | You selected the multiple-subagents execution mode in `coding-workflow`, or you explicitly want to split an approved plan into human-reviewed subtasks and execute them through a declared dispatch backend. |
 | `writing-skills` | user-only | You explicitly want to create, diagnose, edit, or verify skills with a TDD-style process. |
 | `using-tool` | model-invocable | Before using any skill from this plugin, to adapt portable tool-use instructions to the current runtime. |
 
@@ -177,6 +177,147 @@ For runtime-specific notes, see:
 - `adapters/trae/README.md`
 - `adapters/codearts/README.md`
 
+### Universal Helper: Pick The Tools, Pick The Skills
+
+`scripts/install-agent-skills.ps1` is an optional general-purpose installer. It is additive: the per-tool scripts above stay as they are. It targets any subset of tools, any subset of skill groups, and either a directory link (the installed skills follow this repository) or a copy (an independent snapshot).
+
+Skill plan: the installer works with groups, and a group is always installed as a whole. Each group and each skill carries a one-line intro in the menu.
+
+| Group key | Label | Skills |
+|---|---|---|
+| `core` (default) | Core workflow | `coding-workflow`, `subagent-takeover`, `using-tool` |
+| `documents` | Documents | `generating-reqable-docs` |
+| `ideas-memory` | Ideas and memory | `idea-shaping`, `team-memory` |
+| `session` | Session handoff | `session-handoff-save`, `session-handoff-load` |
+
+Skills that are not listed in the plan are ignored by this script, both for installation and for removal. An install with no group or skill selection uses the default group; an uninstall with no selection removes every group. Planned skills missing from `skills/` stop the run with a clear message instead of silently installing an incomplete group.
+
+Local tool detection checks three things per tool: its user state directory (for example `~/.codex` or `$DSH_HOME`), its command on `PATH` (`codex`, `claude`, `dsh`), and whether the `-Target` project already contains the tool's folder (`.trae`, `.codeartsdoer`, `.dsh`, ...). Detected tools are pre-selected in the wizard; every tool stays selectable, so a tool can be prepared before it is installed.
+
+```powershell
+# Interactive: action (install / reinstall / uninstall), groups, tools, link or copy, confirm
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1
+
+# Same wizard with the typed prompt instead of the arrow-key selector
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -PlainSelect
+
+# Pick the action on the command line instead of at the first prompt
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh -Action uninstall
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh -Action reinstall
+
+# Show the skill plan (groups, skills, intros) plus the tool roots, then exit
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -List
+
+# Non-interactive: name the tools and groups on the command line
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh,agents -Groups core
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools trae,codearts -Groups documents,session -Scope project -Target D:\work\my-app
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools custom -Path D:\shared\agent-skills -Groups all -LinkType copy
+
+# Exact skills, bypassing the group rule
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh -Skills using-tool
+
+# Remove the same selection again
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh,agents -Groups core -Uninstall
+
+# Remove and install again even when the entries are already correct
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh,agents -Reinstall
+```
+
+Accepted group values are the key (`core`), the label (`Core workflow`, `Ideas and memory`), an unambiguous prefix (`doc`), or `all`. `-Groups` and `-Skills` cannot be combined.
+
+| Tool key | User root | Project root |
+|---|---|---|
+| `dsh` | `$DSH_HOME/skills` | `<project>/.dsh/skills` |
+| `agents` | `~/.agents/skills` | `<project>/.agents/skills` |
+| `codex` | `~/.codex/skills` | `<project>/.codex/skills` |
+| `claude` | `~/.claude/skills` | `<project>/.claude/skills` |
+| `trae` | — | `<project>/.trae/skills` |
+| `codearts` | — | `<project>/.codeartsdoer/skills` |
+| `custom` | `-Path <skills directory>` | `-Path <skills directory>` |
+
+Behavior worth knowing:
+
+- The wizard asks for the action first: `Install` (keeps entries that are already correct), `Reinstall` (removes the selected entries and adds them again), or `Uninstall`. `-Action install|reinstall|uninstall` sets it on the command line, and `-Reinstall` / `-Uninstall` remain as switches for the same two actions.
+- The group step lists groups as selectable rows with each group's skills and their one-line intros printed underneath; the skill lines are informational, because a group is installed as a whole.
+- An uninstall skips the link/copy prompt, because nothing is being created.
+- The interactive wizard is keyboard-driven in a real console: `Up`/`Down` move, `Space` toggles, `A` selects all, `N` clears, `I` inverts, `Enter` confirms, `Esc` cancels. The single-choice steps (action, install mode) also accept `Left`/`Right` and the digit keys, and the last prompt is a single `Y`/`N` key.
+- `Enter` with nothing selected does not confirm; the selector asks for at least one item so a selection can never be empty.
+- When raw key input is impossible (redirected input or output, `< file`, CI, ISE), the wizard automatically falls back to the typed prompt (`numbers/names`, `a` for all, `0` to cancel) instead of blocking, because reading a key there would hang. `-PlainSelect` forces the typed prompt even in a console.
+- `-LinkType auto` (default) tries an NTFS directory junction, then a symbolic link. `-LinkType copy` copies real files instead, and re-running refreshes the copies.
+- `-Scope auto` (default) uses user roots for user-capable tools and project roots for Trae and CodeArts. `-Scope project` needs `-Target`.
+- CodeArts ignores directory links, so that tool is always installed by copy, followed by `ProjectSkillStatus.txt` for the installed subset.
+- Project installs append the tool's folder (`.dsh/`, `.agents/`, `.trae/`, `.codeartsdoer/`) to that project's `.gitignore`. `.claude/` and `.codex/` are left alone because they can hold tracked configuration.
+- An existing real directory is replaced only when it is a previous copy; anything else needs `-Force`. `-Uninstall` removes links, and removes a real directory only when it mirrors the repository or when `-Force` is given.
+- `-Reinstall` deletes the selected entries and installs them again; without it a re-run is idempotent and reports `already in place`. `-Reinstall` and `-Uninstall` cannot be combined.
+- Every install and uninstall is verified by hashing the installed files against the repository.
+
+### Install Into A DSH (DeepSeek Harness) Environment
+
+DSH discovers skills from `<project>/.dsh/skills`, `<project>/.agents/skills`, `$DSH_HOME/skills`, and `~/.agents/skills`. The DSH installer links every skill directory into one of those roots instead of copying files, so the installed skills follow this repository: edited `SKILL.md` files, new supporting files, and newly added skills apply without reinstalling.
+
+Preview, then install for the current DSH user (available in every project):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1 -WhatIf
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1
+```
+
+Install for one project instead (links into `.dsh/skills` and appends `.dsh/` to that project's `.gitignore`):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1 -Scope project -Target D:\work\my-app
+```
+
+Use `-RootKind agents` to target `.agents/skills` instead of `.dsh/skills`, and remove the links with:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1 -Uninstall
+```
+
+`-LinkType auto` (the default) creates an NTFS directory junction, which needs no special privilege and may point across local volumes; it falls back to a symbolic link only when the junction fails. On Windows a symbolic link needs Developer Mode or an elevated shell. If linking is not possible at all, point the DSH profile at the repository skills directory directly with `customSkillDirs`:
+
+```yaml
+- id: skill-filesystem
+  name: "@deepseek-ai/dsh-skill-filesystem"
+  config:
+    customSkillDirs:
+      - D:\AI\my-skills\skills
+```
+
+DSH watches the skill root itself, so a newly linked skill is detected, but an edit made inside the repository through the link raises no watcher event. Skill content is read live through the link; restart the session if a skill catalog description looks stale.
+
+### Subagent Dispatch Backends
+
+Delegation is the least portable capability across runtimes, and the difference is largest when the model is served behind a local proxy. Runtimes differ in whether a native subagent exists, whether dispatch can block inside the turn, how many subagents may run at once, and whether one can be resumed by handle.
+
+Every runtime file under `skills/using-tool/runtimes/` therefore declares a **Subagent Dispatch Capability** section: native tool, blocking form, parallel limit, resume-by-handle, default backend, and CLI fallback.
+
+`subagent-takeover` resolves exactly one backend before splitting and records it in the subtask document:
+
+| Backend | Execution |
+|---|---|
+| `native` | The runtime's own subagent tool, dispatched blocking inside the turn. |
+| `cli` | The coordinator runs a headless agent process per subtask and waits for it. This is the portable path for local-proxy models, because the spawned process carries its own model configuration. |
+| `sequential` | No delegation: the coordinator executes each subtask itself, with the on-disk subtask document as the context boundary. |
+| `manual` | The coordinator writes dispatch-prompt files for the user to run elsewhere and validates the feedback files that come back. |
+
+All four backends produce the same artifacts — the subtask document, the per-subtask feedback file, and the status table — so a runtime that cannot delegate degrades explicitly instead of silently changing the workflow's outcome.
+
+Declare the backend (and a concurrency cap) in the project-level `.agents/my-skills-local-config.md`:
+
+```markdown
+<!-- agent-dispatch:start -->
+## Agent Dispatch Configuration
+
+- Backend: native | cli | sequential | manual
+- CLI template: <command that runs one headless agent for one prompt file>
+- Max parallel: <integer, default 1>
+- Subagent model: inherit | <provider/model>
+<!-- agent-dispatch:end -->
+```
+
+`Max parallel` defaults to `1`, which is the correct value when a local inference server serves one request at a time.
+
 ## Repository Layout
 
 ```text
@@ -206,7 +347,8 @@ my-skills/
 │   │       ├── claude-code.md
 │   │       ├── codex.md
 │   │       ├── trae.md
-│   │       └── codearts.md
+│   │       ├── codearts.md
+│   │       └── dsh.md
 │   └── writing-skills/
 │       ├── SKILL.md
 │       └── supporting files...

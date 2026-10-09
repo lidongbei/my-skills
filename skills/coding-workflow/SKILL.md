@@ -185,7 +185,7 @@ After `Plan Conclusion` and `Self-Review`, stop and use using-tool's `ask` actio
 
 The `ask` prompt must be:
 
-> 请选择下一步（必须明确选择其中一项）：
+> 请选择下一步（必须明确选择其中一项，或直接输入改动内容）：
 
 Present these Chinese options in this order without changing their existing semantics:
 
@@ -193,9 +193,18 @@ Present these Chinese options in this order without changing their existing sema
 |---|---|---|
 | 1. 按推荐确认方案 | 用户接受 agent 推荐的计划方向。 | 按推荐已被接受的前提再次审查计划：确认每个决策是否可由推荐安全覆盖；任何未解决的 Human-required decision 仍必须逐个询问。 |
 | 2. 逐个确认问题 | 用户希望逐个解决开放问题或决策。 | 询问第一个未解决的 Human-required question，等待回答，逐个继续，然后更新并再次审查计划。 |
-| 3. 改动方案，输入改动内容 | 用户希望在批准前修改方案。 | 要求用户输入要调整的内容，修订完整 working plan（包括受影响的需求追踪、交接约束和关键决策），然后回到本 gate。 |
 
-Do not treat silence, “ok”, “继续”, “确认”, or generic approval as permission to skip this gate unless the user explicitly selected one of the three paths or gave equivalent wording.
+Changes are not a third listed option. Free-text input at this gate is the change path: any user reply that specifies changes to the plan means “modify the plan with this content”. See “Free-text change input” below.
+
+Do not treat silence, “ok”, “继续”, “确认”, or generic approval as permission to skip this gate unless the user explicitly selected option 1 or 2, gave equivalent wording, or supplied plan changes as free text.
+
+#### Free-text change input
+
+When the user replies with plan changes instead of selecting option 1 or 2 — for example “把第 3 步改成先做 X”, “不要用 Y 方案”, or any concrete adjustment — treat it as the change path:
+
+1. Use the supplied content as the changes. Do not ask the user to restate them.
+2. Revise the complete working plan (including affected requirements traceability, handoff constraints, and key decisions).
+3. Return to this gate.
 
 ### 4. Decision Review
 
@@ -253,22 +262,23 @@ The `ask` prompt must be:
 
 > 请选择实现执行模式：
 
-Present these Chinese options in this order without changing the existing semantics of options 1–3:
+Present these Chinese options in this order without changing the existing semantics of options 1–2:
 
 | Option | Meaning | Use when / next action |
 |---|---|---|
 | 1. 主会话直接实现 | Main agent | Small, low-risk, few files |
 | 2. 多个子 agent 分工 | Route to `subagent-takeover` | Independent parallel subtasks. Do not dispatch inline; hand off to `subagent-takeover` immediately after this step. |
-| 3. 修改已保存方案 | Revise saved plan | Do not implement. If changes were not supplied with the selection, ask for them; revise the complete working plan, then return to Step 3. |
 
-Only options 1 and 2 authorize implementation. Option 3 is a plan-revision path, not implementation authorization. Do not edit implementation files, start implementation agents, or run implementation validation until the user explicitly selects option 1 or 2, or explicitly specified an equivalent execution mode before this ask. Silence, “继续”, “尽快做”, “直接开始”, “确认”, generic approval, or any other non-equivalent wording is not implementation authorization.
+Revising the saved plan is not a listed option. Free-text input at this gate is the plan-revision path: if the user replies with concrete plan changes instead of selecting option 1 or 2, treat it as “modify the saved plan with this content” — use the supplied content directly, do not ask the user to restate it, then follow the revision path below.
+
+Only options 1 and 2 authorize implementation. Free-text plan changes are a plan-revision path, not implementation authorization. Do not edit implementation files, start implementation agents, or run implementation validation until the user explicitly selects option 1 or 2, or explicitly specified an equivalent execution mode before this ask. Silence, “继续”, “尽快做”, “直接开始”, “确认”, generic approval, or any other non-equivalent wording is not implementation authorization.
 
 If the user chooses option 2, route to `subagent-takeover` immediately after this step by loading it with the runtime `Skill` tool (`Skill(skill: "my-skills:subagent-takeover")`) and then following its instructions: the coordinator skill reads this saved plan, splits it into a human-reviewable `<output root>/subTasks/YYYY-MM-DD-<topic>.md` document, waits for user approval, then dispatches and validates subagents. Do not ask the user to invoke `/subagent-takeover` again; this selection is the routing authorization. Do not perform subagent dispatch, splitting, or structured-feedback validation inline here; hand off to `subagent-takeover` and let it own that flow. If the runtime `Skill` tool cannot load it, read `skills/subagent-takeover/SKILL.md` directly and follow it.
 
-After the user chooses option 3:
+When the user supplies plan changes as free text instead of selecting option 1 or 2:
 
 1. Stop the execution path. Do not perform any implementation step.
-2. If the user did not supply the requested changes with the selection, use `ask` to collect them.
+2. If the user selected this path without supplying concrete changes, use `ask` to collect them.
 3. Use the saved plan file as the read-only source for a complete working plan. Revise every affected section, including `Requirements Traceability`, `Implementation Handoff`, `Key Decisions and Changes`, and `Self-Review`; the prior approval is no longer valid. Do not update the saved plan file yet.
 4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the output-root repository if the output root is a git repository (per the `Output Root` step); otherwise skip the commit. Do not amend or overwrite the prior plan commit.
 5. Ask the execution-mode question again. Do not implement until the user selects option 1 or 2.

@@ -228,6 +228,23 @@ Typical inspection search:
 
 For MCP-backed checks, discover tools with `tool_search`, inspect schemas with `tool_describe`, then execute with `tool_call`. For scheduled-task verification, use `cronList`. For image-based verification, use `analyzeImage`. Do not claim validation without evidence. If a check was skipped, say it was skipped.
 
+## Subagent Dispatch Capability
+
+| Aspect | CodeArts value |
+|---|---|
+| Native subagent tool | Yes — `task` with a `subagent_type` from the fixed list. |
+| Blocking form | The `task` call returns inside the same turn; do not defer the result to a later turn. |
+| Parallel dispatch | **One `task` call per response.** This runtime cannot dispatch parallel subagents, so any delegation plan must serialize. |
+| Resume by handle | Yes — pass `task_id` to resume a previous subagent session. |
+| Subagent model | The subagent runs on the model the runtime selects; a proxy model that the runtime does not offer cannot be selected from inside a skill. |
+| Default backend | `native`, serialized to one in-flight subtask at a time. |
+| CLI fallback | The coordinator runs a headless agent process via `run` and waits for it; declare the exact command instead of guessing. |
+
+Rules:
+
+- Do not emit multiple `task` calls in one response, and do not translate a parallel dispatch plan into parallel `task` calls.
+- `task_id` resumes a session, but it cannot recover a result that was never written durably; require the subtask's feedback file on disk.
+
 ## Shared Agent Output Configuration
 
 For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.agents/my-skills-local-config.md`. The consuming skill reads/writes this managed block:

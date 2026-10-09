@@ -188,6 +188,23 @@ Typical inspection search:
 
 Do not claim validation without evidence. If a check was skipped, say it was skipped.
 
+## Subagent Dispatch Capability
+
+| Aspect | Claude Code value |
+|---|---|
+| Native subagent tool | Yes — `Agent`. `Workflow` is a separate opt-in primitive, not a dispatch substitute. |
+| Blocking form | `run_in_background: false`. This is the required form whenever the next step depends on the result. |
+| Parallel dispatch | Yes — several `Agent` calls in one message run concurrently while the coordinator still waits inside the turn. |
+| Resume by handle | Yes — `SendMessage` with the recorded agent id resumes a stopped agent with its transcript; `TaskOutput` reads a background task's output. |
+| Subagent model | The subagent runs on the model its agent definition selects, which may differ from the main session. If a local proxy is wired only for the main model, pin the proxy in the subagent definition or switch to the `cli` backend. |
+| Default backend | `native`. |
+| CLI fallback | `claude -p "<task>"` for a headless one-shot agent process; confirm the current flags with `claude --help` before use. |
+
+Rules:
+
+- Never dispatch with `run_in_background: true` as the final action of a turn.
+- Neither `SendMessage` nor `TaskOutput` can recover a result that was never written durably. Require the subtask's feedback file on disk.
+
 ## Shared Agent Output Configuration
 
 For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.agents/my-skills-local-config.md`. The consuming skill reads/writes this managed block:

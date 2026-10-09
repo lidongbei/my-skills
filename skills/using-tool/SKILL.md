@@ -29,7 +29,7 @@ Use this skill when:
 - You are about to use any skill from this plugin.
 - A skill says to use `ask`, `read`, `find`, `edit`, `run`, `todo`, `agent`, or `check`.
 - A skill, prompt, or adapter mentions concrete source-runtime tools such as `AskUserQuestion`, `apply_patch`, task tracking, subagents, shell commands, plan/update mechanisms, or verifier tools.
-- A tool instruction must move between Claude Code, Codex, Trae, CodeArts, or another agent runtime.
+- A tool instruction must move between Claude Code, Codex, Trae, CodeArts, DSH, or another agent runtime.
 
 Do not use aliases to rename frontmatter metadata, runtime policy names, or exact forbidden tools. For example, a rule that explicitly forbids `EnterPlanMode` should keep that exact runtime name when the current runtime is Claude Code.
 
@@ -73,15 +73,42 @@ Load exactly one mapping file for the runtime you are using:
 | Codex | `runtimes/codex.md` |
 | Trae IDE | `runtimes/trae.md` |
 | CodeArts | `runtimes/codearts.md` |
+| DeepSeek Harness (DSH) | `runtimes/dsh.md` |
 
 Runtime files are operating manuals, not only lookup tables. They should define:
 
 - alias-to-capability mappings;
 - instruction shapes and examples;
 - important parameters or schema constraints;
+- the runtime's **Subagent Dispatch Capability** section (see below);
 - fallbacks when the runtime lacks a capability.
 
 If the runtime is unknown or has no file, infer the closest equivalents from visible tools and the alias table. Do not invent a tool call.
+
+## Subagent Dispatch Capability
+
+Delegation is the least portable alias in this plugin. Runtimes differ in whether a native subagent exists at all, whether dispatch can block inside the turn, how many subagents may run at once, and whether a subagent can be resumed by handle. A skill that delegates must therefore not assume one runtime's dispatch semantics.
+
+Every runtime file must state, for its runtime:
+
+- whether a native subagent tool exists, and its blocking form;
+- the parallel-dispatch limit (several calls in one message, or one per response);
+- whether a subagent can be resumed by handle;
+- which dispatch backend the runtime defaults to;
+- the CLI fallback template, when the runtime can spawn a headless agent process.
+
+**Dispatch backends.** A delegating skill resolves one backend before it dispatches, and records it in its own artifact. The backend changes how work is executed, never the external contract (the same subtask document, feedback file, and status table):
+
+| Backend | Execution |
+|---|---|
+| `native` | The runtime's own subagent tool, dispatched blocking inside the turn. |
+| `cli` | The coordinator runs a headless agent process per subtask via `run` and waits for the process. This is the portable path for models served behind a local proxy, because the spawned process carries its own model/provider configuration. |
+| `sequential` | No delegation. The coordinator executes each subtask itself, re-reading the on-disk subtask document at the start of each turn so disk, not context, is the boundary. |
+| `manual` | The coordinator emits dispatch-prompt files for the user to run in another client, and validates the feedback files returned to disk. |
+
+Resolution order when no backend is declared: native → cli → sequential → manual. Record the resolved backend and never fall through silently. A runtime that lacks a capability cannot be given one by a skill; the skill's job is to make the degradation explicit and keep the artifacts identical.
+
+Local-proxy models add three constraints that the backend choice must respect: the subagent may not inherit the proxy's model, local inference servers often serve one request at a time, and a small model may not reliably produce a long structured output. Default to `Max parallel: 1` and prefer skeleton-first, fill-in-the-blank output contracts for such models.
 
 ## Adaptation Flow
 
@@ -92,6 +119,7 @@ If the runtime is unknown or has no file, infer the closest equivalents from vis
    - use plain chat for `ask`;
    - use a Markdown checklist for `todo`;
    - perform manual inspection for `check` when no verifier exists;
+   - for `agent`, switch to the next dispatch backend in the resolution order instead of pretending a subagent ran;
    - state the missing capability for actions that cannot be safely simulated.
 5. Report capability gaps as limitations, not as completed tool calls.
 
@@ -104,4 +132,5 @@ For ambiguous translations, state the alias/source, intent, runtime mapping, lim
 | Treating an alias as a literal command or tool name. | Map it through the current runtime file before acting. |
 | Copying another runtime's JSON schema or parameter format. | Use only the current runtime's visible schema, command syntax, or chat pattern. |
 | Claiming a missing tool was called successfully. | State the limitation and use the documented fallback. |
+| Assuming a subagent exists, blocks, or runs in parallel because another runtime does. | Read the current runtime file's Subagent Dispatch Capability section and use its declared backend. |
 | Loading every runtime file. | Load only the current runtime file unless comparing runtimes. |

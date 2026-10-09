@@ -124,6 +124,24 @@ git diff -- skills/using-tool/runtimes/claude-code.md skills/using-tool/runtimes
 
 If no verifier exists, say what was manually inspected. Do not claim a missing verifier, task, or agent tool was called.
 
+## Subagent Dispatch Capability
+
+| Aspect | Codex value |
+|---|---|
+| Native subagent tool | Not guaranteed. Probe the visible tools before relying on delegation; if it is absent, delegation does not exist in this runtime. |
+| Blocking form | Not applicable without a native subagent tool. If one is visible, dispatch in a form that returns the result inside the same turn. |
+| Parallel dispatch | Not guaranteed. Assume one at a time unless the runtime documents otherwise. |
+| Resume by handle | No documented handle-based resume in this mapping. The on-disk feedback file is the only recovery path. |
+| Subagent model | A spawned CLI process carries its own model/provider configuration; this is why the `cli` backend is the portable choice when models sit behind a local proxy. |
+| Default backend | `cli` when a headless Codex entry point exists; otherwise `sequential`. |
+| CLI fallback | `codex exec "<task>"` for a headless one-shot run; confirm the current subcommand with `codex --help` before use. |
+
+Rules:
+
+- Do not emit a Claude Code `Agent` call, `subagent_type`, or `run_in_background` parameter here.
+- Without handle resume, a subtask whose feedback file is missing or truncated can only be re-dispatched as a fresh process — inspect what landed on disk first.
+- When the `cli` backend is used, the coordinator must wait for the spawned process and read its feedback file, not its stdout alone.
+
 ## Shared Agent Output Configuration
 
 For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.agents/my-skills-local-config.md`. The consuming skill reads/writes this managed block:

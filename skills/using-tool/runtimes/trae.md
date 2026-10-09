@@ -199,6 +199,23 @@ Typical inspection search:
 
 For MCP-backed checks, use `run_mcp` with the matching server and tool names. Do not claim validation without evidence. If a check was skipped, say it was skipped.
 
+## Subagent Dispatch Capability
+
+| Aspect | Trae value |
+|---|---|
+| Native subagent tool | Yes — `Task` with `subagent_type` of `general_purpose_task`, `search`, or `browser_use`. |
+| Blocking form | The `Task` call returns inside the same turn; do not defer the result to a later turn. |
+| Parallel dispatch | Not documented in this mapping. Assume one `Task` at a time and keep `Max parallel: 1` unless the runtime proves otherwise. |
+| Resume by handle | Not documented in this mapping. Treat the on-disk feedback file as the recovery path. |
+| Subagent model | The subagent runs on the model the runtime selects; if a local proxy is wired only for the main model, use the `cli` backend and pass the proxy configuration to the spawned process. |
+| Default backend | `native`. |
+| CLI fallback | The coordinator runs a headless agent process via `run` and waits for it; the exact command depends on the external CLI, so declare it explicitly instead of guessing. |
+
+Rules:
+
+- There is no `Workflow` orchestration tool — do not invent one.
+- Reserve `browser_use` for actual browser tasks; `search` is read-only, `general_purpose_task` is for write/edit work.
+
 ## Shared Agent Output Configuration
 
 For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.agents/my-skills-local-config.md`. The consuming skill reads/writes this managed block:
