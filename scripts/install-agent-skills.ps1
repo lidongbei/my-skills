@@ -1,18 +1,11 @@
 <#
 .SYNOPSIS
-  Optional universal installer: choose the agent tools, choose the skills, choose link or copy.
+  Universal installer: choose the agent tools, choose the skills, choose link or copy.
 
 .DESCRIPTION
-  This script is additive and does not replace the per-tool scripts:
-
-    scripts/install-claude-code.ps1   Claude Code plugin installation (native plugin install)
-    scripts/install-trae.ps1          Trae project installation
-    scripts/install-codearts.ps1      CodeArts project installation (copy + ProjectSkillStatus.txt)
-    scripts/install-dsh.ps1           DSH user/project installation
-
-  Use this one when you want a single command that installs any subset of this repository's
-  skills into any subset of supported tool locations, either by directory link (so the
-  installed skills follow this repository) or by copying real files.
+  This is the repository's single install entry point. It installs any subset of this
+  repository's skills into any subset of supported tool locations, either by directory link
+  (so the installed skills follow this repository) or by copying real files.
 
   The script is self-contained: it reads this repository's `skills/` directory and never
   calls another script, so it works on its own.
@@ -33,8 +26,7 @@
 
       core          coding-workflow, subagent-takeover, configuring-plugin, using-tool   (default)
       documents     generating-reqable-docs
-      ideas-memory  idea-shaping, team-memory
-      session       session-handoff-save, session-handoff-load
+      ideas-memory  idea-shaping
 
     Skills that are not listed in the plan are ignored by this script, both for installation
     and for removal. -Groups selects groups; -Skills selects exact skill names; an install
@@ -53,7 +45,7 @@
   prefer -Groups; -Skills and -Groups cannot be combined.
 
 .PARAMETER Groups
-  Group keys from the skill plan: core, documents, ideas-memory, session, or "all". The
+  Group keys from the skill plan: core, documents, ideas-memory, or "all". The
   interactive wizard offers exactly these groups.
 
 .PARAMETER LinkType
@@ -185,19 +177,10 @@ $SkillPlan = @(
     )
   }
   [pscustomobject]@{
-    Key = 'ideas-memory'; Label = 'Ideas and memory'; Default = $false
-    Note = 'Turn ideas and lessons into durable artifacts'
+    Key = 'ideas-memory'; Label = 'Ideas'; Default = $false
+    Note = 'Turn ideas into actionable artifacts'
     Skills = @(
       [pscustomobject]@{ Name = 'idea-shaping'; Intro = 'Shape a product, feature or project idea into an actionable plan' }
-      [pscustomobject]@{ Name = 'team-memory'; Intro = 'Turn reusable project and team lessons into durable memory' }
-    )
-  }
-  [pscustomobject]@{
-    Key = 'session'; Label = 'Session handoff'; Default = $false
-    Note = 'Carry context from one session to the next'
-    Skills = @(
-      [pscustomobject]@{ Name = 'session-handoff-save'; Intro = 'Save the current session as a handoff for a future session' }
-      [pscustomobject]@{ Name = 'session-handoff-load'; Intro = 'Pick and load an indexed session handoff' }
     )
   }
 )
@@ -322,6 +305,41 @@ function Add-GitignoreEntry {
     Add-Content -Path $gitignorePath -Value $Entry
     Write-Step "Updated $gitignorePath"
   }
+}
+
+# CodeArts registers a skill only when ProjectSkillStatus.txt lists it as enabled.
+# The file mirrors the skills that are actually present in the root as
+# "<skill-name>=true" lines, which is also the format CodeArts' own
+# SystemSkillStatus.txt uses. Remove the file when nothing is left.
+function Update-CodeArtsStatus {
+  param([string]$ToolRoot)
+
+  $statusFile = Join-Path $ToolRoot 'ProjectSkillStatus.txt'
+  $installed = @()
+
+  if (Test-Path -LiteralPath $ToolRoot) {
+    $installed = @(
+      Get-ChildItem -LiteralPath $ToolRoot -Directory |
+        Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md') } |
+        ForEach-Object { $_.Name } |
+        Sort-Object
+    )
+  }
+
+  if ($installed.Count -eq 0) {
+    if (Test-Path -LiteralPath $statusFile) {
+      Write-Step "Would remove $statusFile (no skills left in $ToolRoot)"
+      if (!$WhatIf) { Remove-Item -LiteralPath $statusFile -Force }
+    }
+    return
+  }
+
+  Write-Step "Would write $statusFile with $($installed.Count) entries"
+  if ($WhatIf) { return }
+
+  $statusLines = $installed | ForEach-Object { "$_=true" }
+  Set-Content -LiteralPath $statusFile -Value ($statusLines -join "`r`n") -Encoding UTF8 -NoNewline
+  Write-Step "Wrote ProjectSkillStatus.txt with $($installed.Count) entries"
 }
 
 function Read-Selection {
@@ -655,7 +673,7 @@ function Get-ToolCatalog {
       UserRoot = (Join-Path $HomeDir '.claude\skills'); ProjectFolder = '.claude'
       Gitignore = $null; CopyOnly = $false; SupportsUser = $true
       DetectPaths = @((Join-Path $HomeDir '.claude')); DetectCommands = @('claude'); ProjectMarkers = @('.claude')
-      Note = 'plugin install stays a separate script'
+      Note = 'skill directories only; plugin installation is not covered'
     }
     [pscustomobject]@{
       Key = 'trae'; Label = 'Trae IDE'

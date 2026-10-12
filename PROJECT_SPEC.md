@@ -18,14 +18,11 @@ skills/<skill-name>/SKILL.md
 
 ## Current Skills
 
-This plugin currently contains ten skills:
+This plugin currently contains seven skills:
 
 - `coding-workflow`
 - `configuring-plugin`
-- `team-memory`
 - `idea-shaping`
-- `session-handoff-save`
-- `session-handoff-load`
 - `subagent-takeover`
 - `writing-skills`
 - `generating-reqable-docs`
@@ -91,7 +88,7 @@ Validation must fail if:
 - `skills/` is missing.
 - A direct child of `skills/` lacks `SKILL.md`.
 - `skills/plugins` exists.
-- Any direct skill directory other than `coding-workflow`, `configuring-plugin`, `generating-reqable-docs`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, `subagent-takeover`, `writing-skills`, or `using-tool` exists.
+- Any direct skill directory other than `coding-workflow`, `configuring-plugin`, `generating-reqable-docs`, `idea-shaping`, `subagent-takeover`, `writing-skills`, or `using-tool` exists.
 - A skill frontmatter `name` is missing or does not match its directory.
 - A user-only skill frontmatter `description` is missing, blank, or does not require explicit invocation.
 - A model-invocable skill frontmatter `description` is missing, blank, or does not start with `Use when`.

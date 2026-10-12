@@ -1,6 +1,6 @@
 # my-skills
 
-`my-skills` is a single Claude Code plugin that packages ten agent skills.
+`my-skills` is a single Claude Code plugin that packages seven agent skills.
 
 The plugin root is this repository. Its canonical plugin manifest is:
 
@@ -12,14 +12,11 @@ Included skills:
 
 - `coding-workflow`
 - `configuring-plugin`
-- `team-memory`
-- `idea-shaping`
-- `session-handoff-save`
-- `session-handoff-load`
-- `subagent-takeover`
-- `writing-skills`
 - `generating-reqable-docs`
+- `idea-shaping`
+- `subagent-takeover`
 - `using-tool`
+- `writing-skills`
 
 ## Use As A Claude Code Plugin
 
@@ -57,7 +54,7 @@ List loaded plugins:
 
 Invocation modes:
 
-- `coding-workflow`, `generating-reqable-docs`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
+- `coding-workflow`, `generating-reqable-docs`, `idea-shaping`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
 - `configuring-plugin` is model-invocable so it can configure, upgrade, or repair this plugin's per-project configuration for the current workspace. It also handles configuration writes and repairs delegated from other skills.
 - `subagent-takeover` is model-invocable so `coding-workflow` can route to it after the user selects the multiple-subagents execution mode. It still runs only on that route or on explicit user invocation, never from a generic task category.
 - `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
@@ -77,7 +74,7 @@ Examples:
 ```
 
 ```text
-/team-memory remember this as a reusable team convention
+/configuring-plugin set up this workspace's plugin configuration
 ```
 
 If a runtime tool rejects a user-only skill because of `disable-model-invocation: true`, the user invocation is still valid. The agent should read the matching `skills/<skill-name>/SKILL.md` file and follow it directly.
@@ -89,15 +86,12 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | `coding-workflow` | user-only | You explicitly want to plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
 | `configuring-plugin` | model-invocable | You want to configure, upgrade, or repair this plugin's per-project configuration for the current workspace, or another plugin skill needs a managed configuration block created or repaired. |
 | `generating-reqable-docs` | user-only | You explicitly want to generate a Reqable Collection 3.0 JSON interface document from an API definition or reference collection. |
-| `team-memory` | user-only | You explicitly want to turn reusable project/team lessons or cross-project habits into durable memory. |
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
-| `session-handoff-save` | user-only | You explicitly want to save a temporary current-session handoff for a future session. |
-| `session-handoff-load` | user-only | You explicitly want to choose and load an indexed temporary session handoff. |
 | `subagent-takeover` | model-invocable (routed from `coding-workflow` or explicit invocation) | You selected the multiple-subagents execution mode in `coding-workflow`, or you explicitly want to split an approved plan into human-reviewed subtasks and execute them through a declared dispatch backend. |
 | `writing-skills` | user-only | You explicitly want to create, diagnose, edit, or verify skills with a TDD-style process. |
 | `using-tool` | model-invocable | Before using any skill from this plugin, to adapt portable tool-use instructions to the current runtime. |
 
-## Optional: Persistently Install This Claude Code Plugin
+## Install As A Claude Code Plugin
 
 The preferred development path is loading the repository for the current session:
 
@@ -105,27 +99,15 @@ The preferred development path is loading the repository for the current session
 claude --plugin-dir .
 ```
 
-To persistently install the entire repository as one Claude Code plugin, run:
-
-Preview the installation without changing Claude Code configuration:
+To persistently install the entire repository as one Claude Code plugin, validate first, then register the local marketplace and install the plugin with Claude Code's native commands:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -WhatIf
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate.ps1
+claude plugin marketplace add D:\AI\my-skills
+claude plugin install my-skills@my-skills
 ```
 
-Install for the current user (the default, available across projects):
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1
-```
-
-Install with another Claude Code scope:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-claude-code.ps1 -Scope project
-```
-
-The script validates the repository, registers its local marketplace, and runs Claude Code's native `plugin install` command. It installs one `my-skills` plugin containing all nine skills; it does not copy separate skill directories into `~/.claude/skills`.
+Add `--scope project` (or `--scope local`) to either native command to limit the installation to a project or local configuration. This installs one `my-skills` plugin containing all seven skills; it does not copy separate skill directories into `~/.claude/skills`.
 
 Inspect or remove the persistent installation with Claude Code's native commands:
 
@@ -135,17 +117,15 @@ claude plugin details my-skills
 claude plugin uninstall my-skills@my-skills
 ```
 
-## Optional: Sync Skills Into Claude Code User Skills
+## Skill Directory Installs And The Sync Helper
 
-If you specifically need user-level skill copies under `~/.claude/skills` for a non-plugin runtime, use the legacy copy helper. This is separate from the primary Claude Code plugin installation workflow.
+`scripts/install-agent-skills.ps1` is the repository's single install script. It installs skill directories into agent tool roots; it is not a plugin installer, and it does not register marketplaces or run `claude plugin install`.
 
-Preview the sync:
+`scripts/sync-from-claude.ps1` is the reverse-direction maintenance helper: it copies skill directories from `~/.claude/skills` back into this repository. It is not an installer.
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/sync-from-claude.ps1 -WhatIf
 ```
-
-This script is a copy/sync utility, not the plugin installer.
 
 ## Use With Other Agent Runtimes
 
@@ -180,18 +160,17 @@ For runtime-specific notes, see:
 - `adapters/trae/README.md`
 - `adapters/codearts/README.md`
 
-### Universal Helper: Pick The Tools, Pick The Skills
+### Install Script: Pick The Tools, Pick The Skills
 
-`scripts/install-agent-skills.ps1` is an optional general-purpose installer. It is additive: the per-tool scripts above stay as they are. It targets any subset of tools, any subset of skill groups, and either a directory link (the installed skills follow this repository) or a copy (an independent snapshot).
+`scripts/install-agent-skills.ps1` is the repository's single install script, and it replaces the former per-tool installers. It targets any subset of tools, any subset of skill groups, and either a directory link (the installed skills follow this repository) or a copy (an independent snapshot).
 
 Skill plan: the installer works with groups, and a group is always installed as a whole. Each group and each skill carries a one-line intro in the menu.
 
 | Group key | Label | Skills |
 |---|---|---|
-| `core` (default) | Core workflow | `coding-workflow`, `subagent-takeover`, `using-tool` |
+| `core` (default) | Core workflow | `coding-workflow`, `subagent-takeover`, `configuring-plugin`, `using-tool` |
 | `documents` | Documents | `generating-reqable-docs` |
-| `ideas-memory` | Ideas and memory | `idea-shaping`, `team-memory` |
-| `session` | Session handoff | `session-handoff-save`, `session-handoff-load` |
+| `ideas-memory` | Ideas | `idea-shaping` |
 
 Skills that are not listed in the plan are ignored by this script, both for installation and for removal. An install with no group or skill selection uses the default group; an uninstall with no selection removes every group. Planned skills missing from `skills/` stop the run with a clear message instead of silently installing an incomplete group.
 
@@ -213,7 +192,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-sk
 
 # Non-interactive: name the tools and groups on the command line
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh,agents -Groups core
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools trae,codearts -Groups documents,session -Scope project -Target D:\work\my-app
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools trae,codearts -Groups documents,ideas-memory -Scope project -Target D:\work\my-app
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools custom -Path D:\shared\agent-skills -Groups all -LinkType copy
 
 # Exact skills, bypassing the group rule
@@ -226,7 +205,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-sk
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh,agents -Reinstall
 ```
 
-Accepted group values are the key (`core`), the label (`Core workflow`, `Ideas and memory`), an unambiguous prefix (`doc`), or `all`. `-Groups` and `-Skills` cannot be combined.
+Accepted group values are the key (`core`), the label (`Core workflow`, `Ideas`), an unambiguous prefix (`doc`), or `all`. `-Groups` and `-Skills` cannot be combined.
 
 | Tool key | User root | Project root |
 |---|---|---|
@@ -256,25 +235,25 @@ Behavior worth knowing:
 
 ### Install Into A DSH (DeepSeek Harness) Environment
 
-DSH discovers skills from `<project>/.dsh/skills`, `<project>/.agents/skills`, `$DSH_HOME/skills`, and `~/.agents/skills`. The DSH installer links every skill directory into one of those roots instead of copying files, so the installed skills follow this repository: edited `SKILL.md` files, new supporting files, and newly added skills apply without reinstalling.
+DSH discovers skills from `<project>/.dsh/skills`, `<project>/.agents/skills`, `$DSH_HOME/skills`, and `~/.agents/skills`. Install into those roots with the install script, which links every skill directory instead of copying files, so the installed skills follow this repository: edited `SKILL.md` files, new supporting files, and newly added skills apply without reinstalling.
 
 Preview, then install for the current DSH user (available in every project):
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1 -WhatIf
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh -WhatIf
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh
 ```
 
 Install for one project instead (links into `.dsh/skills` and appends `.dsh/` to that project's `.gitignore`):
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1 -Scope project -Target D:\work\my-app
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh -Scope project -Target D:\work\my-app
 ```
 
-Use `-RootKind agents` to target `.agents/skills` instead of `.dsh/skills`, and remove the links with:
+Add `-Tools agents` to cover the `.agents/skills` root as well, and remove the links with:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-dsh.ps1 -Uninstall
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh,agents -Uninstall
 ```
 
 `-LinkType auto` (the default) creates an NTFS directory junction, which needs no special privilege and may point across local volumes; it falls back to a symbolic link only when the junction fails. On Windows a symbolic link needs Developer Mode or an elevated shell. If linking is not possible at all, point the DSH profile at the repository skills directory directly with `customSkillDirs`:
@@ -331,19 +310,14 @@ my-skills/
 ├── skills/
 │   ├── coding-workflow/
 │   │   └── SKILL.md
+│   ├── configuring-plugin/
+│   │   └── SKILL.md
 │   ├── generating-reqable-docs/
 │   │   └── SKILL.md
 │   ├── idea-shaping/
 │   │   └── SKILL.md
-│   ├── session-handoff-load/
-│   │   └── SKILL.md
-│   ├── session-handoff-save/
-│   │   └── SKILL.md
 │   ├── subagent-takeover/
 │   │   └── SKILL.md
-│   ├── team-memory/
-│   │   ├── SKILL.md
-│   │   └── evals/
 │   ├── using-tool/
 │   │   ├── SKILL.md
 │   │   └── runtimes/

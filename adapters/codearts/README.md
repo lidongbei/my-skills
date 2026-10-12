@@ -22,19 +22,19 @@ Copy selected skill directories as **real files** into the target project's Code
 <Target>\.codeartsdoer\skills\<skill-name>
 ```
 
-Use the helper script:
+Use the install script with the `codearts` tool key:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-codearts.ps1 -WhatIf -Target "D:\other-project"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools codearts -Target "D:\other-project" -WhatIf
 ```
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-codearts.ps1 -Target "D:\other-project"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools codearts -Target "D:\other-project"
 ```
 
-The script validates the plugin first, then **copies real files** (not junctions) for each approved skill and writes `ProjectSkillStatus.txt` with one `<skill-name>=true` line per skill so CodeArts registers them as enabled.
+The script validates the plugin first, then **copies real files** (not junctions) for each installed skill and writes `ProjectSkillStatus.txt` with one `<skill-name>=true` line per skill so CodeArts registers them as enabled.
 
-> Why copy, not link: CodeArts does not follow directory junctions or symlinks when discovering skills. Real files are required. Re-run the script to refresh copies after updating skills in this source repository.
+> Why copy, not link: CodeArts does not follow directory junctions or symlinks when discovering skills. Real files are required. Re-run the script (`-Action reinstall`) to refresh copies after updating skills in this source repository.
 
 ### Option 3: Shared cross-runtime location
 
@@ -51,10 +51,8 @@ See `adapters/agents/AGENTS.md` for the shared portable layout.
 - `coding-workflow`
 - `configuring-plugin`
 - `generating-reqable-docs`
-- `team-memory`
 - `idea-shaping`
-- `session-handoff-save`
-- `session-handoff-load`
+- `subagent-takeover`
 - `writing-skills`
 - `using-tool`
 
