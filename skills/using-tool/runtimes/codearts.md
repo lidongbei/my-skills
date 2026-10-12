@@ -263,6 +263,26 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 - `.agents/` is git-ignored: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`.
 - Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not read or use `CLAUDE.md`, `AGENTS.md`, `.codeartsdoer/rules/`, or any other file for this configuration.
 
+## Shared Agent Dispatch Configuration
+
+`subagent-takeover` persists its dispatch backend in the same `.agents/my-skills-local-config.md` file, as a second managed block:
+
+```markdown
+<!-- agent-dispatch:start -->
+## Agent Dispatch Configuration
+
+- Backend: native | cli | sequential | manual
+- CLI template: <command that runs one headless agent for one prompt file>
+- Max parallel: <integer, default 1>
+- Subagent model: inherit | <provider/model>
+<!-- agent-dispatch:end -->
+```
+
+- Same location, same read/append/replace rules as the output-root block; the two blocks are independent, and editing one must preserve the other.
+- `Backend` is one of the four values, `CLI template` is required when `Backend: cli`, `Max parallel` defaults to `1`, and `Subagent model` is `inherit` or a `provider/model` pair.
+- This block is optional: when it is absent, `subagent-takeover` uses this runtime file's `Subagent Dispatch Capability` default backend. Never invent a value to fill it.
+- Creating or repairing either block is `configuring-plugin`'s job, not the consuming skill's. This file defines only where the blocks live and what shape they take.
+
 ## CodeArts Boundaries
 
 - CodeArts exposes a single `todowrite` tool, not the Claude Code `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` family. Translate tracking intent instead of copying the four-tool pattern.
