@@ -31,7 +31,7 @@
 
     The installer works with groups, and a group is installed as a whole. The plan is:
 
-      core          coding-workflow, subagent-takeover, using-tool   (default)
+      core          coding-workflow, subagent-takeover, configuring-plugin, using-tool   (default)
       documents     generating-reqable-docs
       ideas-memory  idea-shaping, team-memory
       session       session-handoff-save, session-handoff-load
@@ -173,6 +173,7 @@ $SkillPlan = @(
     Skills = @(
       [pscustomobject]@{ Name = 'coding-workflow'; Intro = 'Plan, approve, implement and validate non-trivial coding work' }
       [pscustomobject]@{ Name = 'subagent-takeover'; Intro = 'Split an approved plan into human-reviewed subtasks' }
+      [pscustomobject]@{ Name = 'configuring-plugin'; Intro = 'Configure this plugin per project and repair its configuration blocks' }
       [pscustomobject]@{ Name = 'using-tool'; Intro = 'Load first: map portable tool actions to the current runtime' }
     )
   }

@@ -41,7 +41,7 @@ Resolve the output root exactly as `coding-workflow` does. Read and honor the sa
 <!-- agent-output-root:end -->
 ```
 
-Use the same resolution order and the same invalid-configuration rule as `coding-workflow`. Do not re-derive a different root. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks.
+Use the same resolution order and the same invalid-configuration rule as `coding-workflow`. Do not re-derive a different root. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. When the output root is missing or needs repair, delegate the create/repair to `configuring-plugin`; this skill only reads the value.
 
 Paths under the output root for this skill:
 
@@ -79,6 +79,8 @@ Resolution order:
 3. If neither is available, resolve `native` → `cli` → `sequential` → `manual`, taking the first backend the runtime can actually perform.
 
 `CLI template` is required for the `cli` backend and is a free-form command declared by the user or the project; do not invent a headless command for a runtime that does not document one. `Max parallel` defaults to `1` when absent, which is the correct default when the model is served behind a local proxy. `Subagent model` records whether the subtask runs on the same model as the coordinator; when it is not `inherit` and the runtime cannot pin a model, prefer `cli`, because a spawned process carries its own model configuration.
+
+Creating or repairing the `agent-dispatch` managed block is owned by `configuring-plugin`. When the user wants a non-default backend persisted, or the block is missing, malformed, or duplicated, delegate that create/repair to `configuring-plugin`; this skill resolves the backend from the resulting block or the runtime default, and never writes the block itself.
 
 | Backend | How a subtask is executed | Turn-ending state |
 |---|---|---|

@@ -16,7 +16,7 @@ disable-model-invocation: true
 - 其他环境值缺失时使用显式占位符，例如 `<REQUIRED_PLAN_ID>`，并在完成报告中列出待替换项；不要为补齐字段凭空猜测业务值。
 - 不调用真实接口、不生成响应示例、不推断参考文件没有提供的鉴权或业务规则。
 - 输出路径或文件名由用户明确指定时，优先使用用户路径。未指定完整输出路径时，使用共享 output root：按当前 runtime mapping 指定的项目级配置位置读取 `.agents/my-skills-local-config.md` 中唯一有效的 `agent-output-root` managed block；有有效配置时，默认输出到 `<output root>/reqable/<collection-name>.reqable_collection.json`。`<collection-name>` 使用用户提供的 Collection 名称转换为 kebab-case；无法可靠得出名称时，才用 `ask` 询问文件名。
-- 当前 runtime 指定位置没有 managed block 时，首次需要写入输出文件前使用 `ask` 选择 output root 一次，并将默认 `<工作区上级目录>/<项目名>.agent` 标为推荐；验证后只在 `.agents/my-skills-local-config.md` 追加 `agent-output-root` managed block。对本技能而言，有效 output root 必须是绝对路径，且为现有目录或可创建的目录；现有普通文件或不可创建的路径无效。若 managed block 损坏、重复或路径无效，不得静默修复、回退其它配置文件或覆盖配置；用 `ask` 要求用户修复。不得读取、识别、迁移或复用旧 `coding-workflow:artifact-root` block。
+- 当前 runtime 指定位置没有 managed block，或 managed block 损坏、重复、路径无效时，创建或修复该配置是 `configuring-plugin` 的职责：把创建/修复委托给 `configuring-plugin`，再使用它报告的值；本技能只读取和校验，不自行写入 managed block。对本技能而言，有效 output root 必须是绝对路径，且为现有目录或可创建的目录；现有普通文件或不可创建的路径无效。不得静默修复、回退其它配置文件或覆盖配置。不得读取、识别、迁移或复用旧 `coding-workflow:artifact-root` block。
 - 默认的 `<output root>/reqable` 目录不存在时可以创建；Reqable 输出不要求 output root 是 Git 仓库，也不提交该输出。覆盖已有文件前必须用 `read` 检查目标并取得明确许可。覆盖操作应先在内存中完成全部校验，再写入临时文件；写后重新读取并解析确认成功后，才原子替换目标文件。任一输入、序列化、校验或写入步骤失败，都不得截断或覆盖原文件，也不得宣称成功。
 
 ## 输入契约

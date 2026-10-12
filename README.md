@@ -1,6 +1,6 @@
 # my-skills
 
-`my-skills` is a single Claude Code plugin that packages nine agent skills.
+`my-skills` is a single Claude Code plugin that packages ten agent skills.
 
 The plugin root is this repository. Its canonical plugin manifest is:
 
@@ -11,6 +11,7 @@ The plugin root is this repository. Its canonical plugin manifest is:
 Included skills:
 
 - `coding-workflow`
+- `configuring-plugin`
 - `team-memory`
 - `idea-shaping`
 - `session-handoff-save`
@@ -57,6 +58,7 @@ List loaded plugins:
 Invocation modes:
 
 - `coding-workflow`, `generating-reqable-docs`, `team-memory`, `idea-shaping`, `session-handoff-save`, `session-handoff-load`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
+- `configuring-plugin` is model-invocable so it can configure, upgrade, or repair this plugin's per-project configuration for the current workspace. It also handles configuration writes and repairs delegated from other skills.
 - `subagent-takeover` is model-invocable so `coding-workflow` can route to it after the user selects the multiple-subagents execution mode. It still runs only on that route or on explicit user invocation, never from a generic task category.
 - `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
 
@@ -85,6 +87,7 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | Skill | Mode | Use when... |
 |---|---|---|
 | `coding-workflow` | user-only | You explicitly want to plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
+| `configuring-plugin` | model-invocable | You want to configure, upgrade, or repair this plugin's per-project configuration for the current workspace, or another plugin skill needs a managed configuration block created or repaired. |
 | `generating-reqable-docs` | user-only | You explicitly want to generate a Reqable Collection 3.0 JSON interface document from an API definition or reference collection. |
 | `team-memory` | user-only | You explicitly want to turn reusable project/team lessons or cross-project habits into durable memory. |
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |

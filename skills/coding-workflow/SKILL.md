@@ -26,9 +26,9 @@ Non-trivial means a wrong edit could affect behavior, touch multiple files, requ
 
 ### Output Root
 
-Plan and completion records are saved under a configurable **output root**, not inside the working repository. The same output-root configuration is shared by `coding-workflow` and `generating-reqable-docs`.
+Plan and completion records are saved under a configurable **output root**, not inside the working repository. The same output-root configuration is shared by `coding-workflow`, `generating-reqable-docs`, and `subagent-takeover`.
 
-Default output root: the parent of the current repository root plus `<project name>.agent`, where `<project name>` is the repository directory name. Example: repository `D:\AI\my-skills` → default `D:\AI\my-skills.agent`.
+Default output root: the parent of the current repository root plus `<project name>__agent`, where `<project name>` is the repository directory name. Example: repository `D:\AI\my-skills` → default `D:\AI\my-skills__agent`.
 
 Each runtime mapping defines one project-level location for shared output-root configuration. Read and update only that location; do not guess, scan, or modify other instruction/configuration files. The managed configuration block lives in the git-ignored local markdown file designated by the runtime mapping (`.agents/my-skills-local-config.md`):
 
@@ -43,13 +43,11 @@ Each runtime mapping defines one project-level location for shared output-root c
 Resolve the output root for the current session, in this order:
 
 1. If a root was already resolved in this session and the user has not explicitly supplied a different path, reuse it.
-2. If the user explicitly gave a directory in the invocation or an earlier message, use it and update the current runtime's managed configuration block after validating it.
+2. If the user explicitly gave a directory in the invocation or an earlier message, use it after validating it. To persist that value, delegate the write to `configuring-plugin`; do not write the managed block here.
 3. Otherwise, read the current runtime mapping's project-level location. If it contains exactly one valid managed block with a nonempty absolute `Output root` path, use that path after validating it.
-4. If the current runtime's designated location contains no managed block, the first time a plan or completion record needs to be saved, use using-tool's `ask` action to choose the output root once, marking the default as the recommended option. After validation, append the managed configuration block before saving the record. If one or more managed blocks exist but do not satisfy step 3, follow the invalid-configuration rule below instead.
+4. If the designated location has no managed block, or holds a malformed, duplicated, or legacy-only configuration, hand off to `configuring-plugin` to create or repair the output-root configuration interactively, then use the value it reports.
 
-Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. They do not constitute a shared output-root configuration.
-
-If the configured block is malformed, duplicated, or names a root that fails validation, do not silently repair it, fall back to another file, or overwrite the designated location. Use `ask` to explain that persistence is blocked and require the user to resolve the configuration. Do not persist a new root until the designated location contains either no managed block (then append one) or exactly one valid managed block (then replace only that block). Preserve all content outside that block.
+Creating or repairing the managed block is owned by `configuring-plugin`; `coding-workflow` only reads and validates the value. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. Do not silently repair a malformed or duplicated block, fall back to another file, or overwrite the designated location; that repair is `configuring-plugin`'s delegated job, decided by the user.
 
 Paths under the output root:
 
@@ -274,6 +272,8 @@ Revising the saved plan is not a listed option. Free-text input at this gate is 
 Only options 1 and 2 authorize implementation. Free-text plan changes are a plan-revision path, not implementation authorization. Do not edit implementation files, start implementation agents, or run implementation validation until the user explicitly selects option 1 or 2, or explicitly specified an equivalent execution mode before this ask. Silence, “继续”, “尽快做”, “直接开始”, “确认”, generic approval, or any other non-equivalent wording is not implementation authorization.
 
 If the user chooses option 2, route to `subagent-takeover` immediately after this step by loading it with the runtime `Skill` tool (`Skill(skill: "my-skills:subagent-takeover")`) and then following its instructions: the coordinator skill reads this saved plan, splits it into a human-reviewable `<output root>/subTasks/YYYY-MM-DD-<topic>.md` document, waits for user approval, then dispatches and validates subagents. Do not ask the user to invoke `/subagent-takeover` again; this selection is the routing authorization. Do not perform subagent dispatch, splitting, or structured-feedback validation inline here; hand off to `subagent-takeover` and let it own that flow. If the runtime `Skill` tool cannot load it, read `skills/subagent-takeover/SKILL.md` directly and follow it.
+
+Before that hand-off, if the saved plan or dispatch configuration is missing or malformed, route to `configuring-plugin` to create or repair the output-root and dispatch configuration interactively; `coding-workflow` does not write those managed blocks itself.
 
 When the user supplies plan changes as free text instead of selecting option 1 or 2:
 
