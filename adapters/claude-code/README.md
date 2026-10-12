@@ -48,9 +48,9 @@ That runtime file maps portable tool-action instructions to Claude Code tools, u
 
 `coding-workflow` and `generating-reqable-docs` share an output root. The value is machine-specific and stored per-developer in the git-ignored `.agents/my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. It is never written into the shared `CLAUDE.md`.
 
-## Skill Directory Install And Sync Helper
+## Skill Directory Install
 
-`~/.claude/skills` is a legacy user-skill directory. The plugin installer does not write there. If another runtime specifically needs copied skill directories, use `scripts/install-agent-skills.ps1` (which links or copies skill directories into agent tool roots), or `scripts/sync-from-claude.ps1` (which copies skill directories back from `~/.claude/skills` into this repository), and treat those copies as independent from the installed plugin.
+`~/.claude/skills` is a legacy user-skill directory. The plugin installer does not write there. If another runtime specifically needs copied skill directories, use `scripts/install-agent-skills.ps1` (which links or copies skill directories into agent tool roots), and treat those copies as independent from the installed plugin.
 
 ## Policy
 

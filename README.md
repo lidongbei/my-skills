@@ -117,15 +117,9 @@ claude plugin details my-skills
 claude plugin uninstall my-skills@my-skills
 ```
 
-## Skill Directory Installs And The Sync Helper
+## Skill Directory Installs
 
 `scripts/install-agent-skills.ps1` is the repository's single install script. It installs skill directories into agent tool roots; it is not a plugin installer, and it does not register marketplaces or run `claude plugin install`.
-
-`scripts/sync-from-claude.ps1` is the reverse-direction maintenance helper: it copies skill directories from `~/.claude/skills` back into this repository. It is not an installer.
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/sync-from-claude.ps1 -WhatIf
-```
 
 ## Use With Other Agent Runtimes
 
@@ -356,10 +350,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate.ps1
 
 ## Sync Notes
 
-This repository is the source project. Avoid editing installed copies under `~/.claude/skills` independently unless you intentionally sync them back.
-
-If you intentionally changed installed Claude Code skills and want to sync them into this repository, inspect and use:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/sync-from-claude.ps1
-```
+This repository is the source project. Do not edit installed copies under `~/.claude/skills` independently; the directory install links those copies back to `skills/`, so edits made there already land in the repository. Prefer editing `skills/<skill-name>/` directly and then reinstalling or updating the plugin.
