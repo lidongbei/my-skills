@@ -158,7 +158,7 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 - Use `read` to inspect only this file for the managed block defined by the consuming skill.
 - If a resolved, validated output root must be persisted and the file does not exist, use `edit` to create the `.agents/` directory and a file containing exactly that managed block.
 - If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present. Preserve all content outside that block.
-- `.agents/` is git-ignored: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`.
+- The configuration location file `.agents/my-skills-local-config.md` is kept out of version control by an ignore rule that names that file: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`. Verifying and adding that rule is `configuring-plugin`'s job, not the consuming skill's.
 - Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not read or use `CLAUDE.md`, `AGENTS.md`, `.trae/`, or any other file for this configuration.
 
 ## Shared Agent Dispatch Configuration

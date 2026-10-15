@@ -35,9 +35,9 @@ The registered project-level configuration items for this plugin. Treat this tab
 |---|---|---|---|---|
 | Output root | `agent-output-root` | `Output root` = an absolute path | `coding-workflow`, `subagent-takeover`, `generating-reqable-docs` | Required |
 | Dispatch | `agent-dispatch` | `Backend`; `CLI template` when `Backend: cli`; `Max parallel` (default `1`); `Subagent model` | `subagent-takeover` | Optional (absent → runtime default) |
-| Config location ignore | none — a version control ignore rule, not a block | The configuration location's directory is excluded by the workspace's version control, so the local config is never committed | the whole registry: a per-developer file that gets committed stops being per-developer | Required |
+| Config location ignore | none — a version control ignore rule, not a block | The configuration location file itself is excluded by the workspace's version control, so the local config is never committed | the whole registry: a per-developer file that gets committed stops being per-developer | Required |
 
-The configuration location is per-developer, machine-specific state: it holds absolute paths and runtime-specific backend choices, and the runtime mappings state that the location is ignored. That ignore rule is an invariant to verify, not a fact to assume — a fresh workspace usually has no ignore entry for it, and the first `git add .` then commits a machine-specific file into the shared repository.
+The configuration location is per-developer, machine-specific state: it holds absolute paths and runtime-specific backend choices, and the runtime mappings state that the location is ignored. That ignore rule is an invariant to verify, not a fact to assume — a fresh workspace usually has no ignore entry for it, and the first `git add .` then commits a machine-specific file into the shared repository. The rule covers exactly the configuration location file: only that file carries machine-specific state, so ignore the file, never its whole parent directory. A directory-wide rule such as `.agents/` also hides sibling content that is meant to be shared.
 
 Write managed blocks in exactly this shape:
 
@@ -87,11 +87,11 @@ For each block-backed item, assign exactly one state from the `read` result:
 - `malformed` — duplicated blocks, truncated markers, or an invalid value.
 - `legacy-only` — only a block whose name is listed as legacy exists (for example `coding-workflow:artifact-root`). Legacy blocks are not valid configuration and must never be migrated or reused.
 
-Classify the config-location ignore item:
+Classify the config-location ignore item by asking whether the configuration location **file** is excluded, not its parent directory:
 
-- `valid` — the configuration location's directory is already excluded by an ignore rule that applies to that path, or the workspace is not under a version control root (`.git`), so no ignore rule applies.
-- `missing` — the workspace is under a version control root and the configuration location's directory is not excluded.
-- `malformed` — an ignore rule mentions the path but a later rule re-includes it, so the path is not actually excluded.
+- `valid` — the configuration location file is already excluded by an ignore rule that applies to that exact path, or the workspace is not under a version control root (`.git`), so no ignore rule applies.
+- `missing` — the workspace is under a version control root and the configuration location file is not excluded. An ignore rule for the parent directory does not cover this item: the rule must name the file.
+- `malformed` — an ignore rule mentions the file path but a later rule re-includes it, so the file is not actually excluded.
 
 ### 3. Plan the interactive session
 
@@ -104,7 +104,7 @@ Ask before writing any value; do not re-ask a `valid` item — report it instead
 - `missing` required item: use `ask` to let the user choose the value once. Mark the consumed skill's documented default as the recommended option (output-root default: the repository parent directory + `<project name>__agent`).
 - `missing` optional item: use `ask` to let the user set it, skip it, or accept the runtime default; do not write a value silently.
 - `malformed` or `legacy-only`: do not repair or migrate silently. Use `ask` to present the exact conflict and the candidate resolutions (which block to keep, which to delete, or clear to `missing`) and let the user decide. Apply only what the user chose.
-- Config-location ignore item, `missing`: use `ask` to offer adding the ignore rule as the recommended option; do not add it silently. This is a workspace-level invariant, so it stays `missing` unless the user chooses it.
+- Config-location ignore item, `missing`: use `ask` to offer adding the ignore rule as the recommended option; do not add it silently. Recommend the rule for the configuration location file (`/.agents/my-skills-local-config.md` under Claude Code) and mark it as the recommended option. If an existing rule ignores a whole parent directory that contains the configuration location, present narrowing it to the file as an alternative option, and do not delete or rewrite the existing rule on your own. This is a workspace-level invariant, so it stays `missing` unless the user chooses it.
 - Config-location ignore item, `malformed`: present the conflicting rule and let the user decide what to do with it.
 
 ### 5. Write
@@ -117,7 +117,7 @@ Use `edit` to write only the managed block(s) the user chose:
 
 Never touch a block the user did not ask to change, and preserve all content outside the managed blocks.
 
-For the config-location ignore item, use `edit` to add the ignore rule **only when the user chose it**. Check for an equivalent existing rule first, and append only the missing line: never duplicate an ignore rule or rewrite the file.
+For the config-location ignore item, use `edit` to add the ignore rule for the configuration location file **only when the user chose it**. Check for an equivalent existing rule first, and append only the missing line: never duplicate an ignore rule or rewrite the file. When the user chose to narrow an existing parent-directory rule instead, replace that one line with the file rule — do not touch any other line.
 
 ### 6. Check
 
@@ -127,7 +127,7 @@ For the config-location ignore item, use `edit` to add the ignore rule **only wh
 - the output root is an absolute path and is an existing directory or a creatable path (an existing file or non-creatable path is invalid);
 - `Backend:` is one of `native | cli | sequential | manual`; `CLI template` is present when the backend is `cli`; `Max parallel` is an integer ≥ 1.
 
-For the config-location ignore item, `check` by re-reading the ignore file and confirming the rule excludes the configuration location. When the workspace is not under version control, cite that as the evidence instead.
+For the config-location ignore item, `check` by re-reading the ignore file and confirming a rule excludes the configuration location **file** (cite the matching rule line, or a `git check-ignore` result naming the file). Do not accept a parent-directory rule as evidence. When the workspace is not under version control, cite that as the evidence instead.
 
 Do not claim an item is configured without this evidence.
 
@@ -156,6 +156,8 @@ Always end with this report, one row per registry item:
 | Treating a legacy `artifact-root` block as usable configuration. | Mark it `legacy-only`; never migrate or reuse it. |
 | Assuming the configuration location is git-ignored in a fresh workspace. | Verify the ignore rule and add it with the user's consent. |
 | Duplicating an existing ignore rule, or rewriting the ignore file. | Append only the missing line; preserve everything else. |
+| Ignoring the whole configuration directory (for example `.agents/`). | Ignore the configuration location file itself; a directory-wide rule also hides sibling content meant to be shared. |
+| Treating a parent-directory ignore rule as satisfying the config-location ignore item. | Classify the file as `missing`; the rule must name the file. |
 | Reporting "configured" without re-reading. | `check` by re-reading; cite the evidence. |
 | Editing text outside the managed blocks. | Change only the block content the user chose. |
 | Auto-running `git init` on an output root. | Do not; that decision belongs to the user under the consuming skill. |
