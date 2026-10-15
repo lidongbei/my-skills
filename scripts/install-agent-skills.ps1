@@ -285,28 +285,6 @@ function Test-DirectoryMirrors {
   return $true
 }
 
-function Add-GitignoreEntry {
-  param([string]$ProjectDir, [string]$Entry)
-  if ([string]::IsNullOrWhiteSpace($Entry)) { return }
-
-  $gitignorePath = Join-Path $ProjectDir '.gitignore'
-  $existing = ''
-  if (Test-Path -LiteralPath $gitignorePath) { $existing = Get-Content -LiteralPath $gitignorePath -Raw }
-  $pattern = "(?m)^\s*$([regex]::Escape($Entry.TrimEnd('/')))/?\s*$"
-  if ($existing -match $pattern) {
-    Write-Step ".gitignore already ignores $Entry"
-    return
-  }
-  Write-Step "Would append '$Entry' to $gitignorePath"
-  if (!$WhatIf) {
-    if ($existing.Length -gt 0 -and -not $existing.EndsWith([Environment]::NewLine)) {
-      Add-Content -Path $gitignorePath -Value ''
-    }
-    Add-Content -Path $gitignorePath -Value $Entry
-    Write-Step "Updated $gitignorePath"
-  }
-}
-
 # CodeArts registers a skill only when ProjectSkillStatus.txt lists it as enabled.
 # The file mirrors the skills that are actually present in the root as
 # "<skill-name>=true" lines, which is also the format CodeArts' own
@@ -650,49 +628,49 @@ function Get-ToolCatalog {
     [pscustomobject]@{
       Key = 'dsh'; Label = 'DSH (DeepSeek Harness)'
       UserRoot = (Join-Path $dshHome 'skills'); ProjectFolder = '.dsh'
-      Gitignore = '.dsh/'; CopyOnly = $false; SupportsUser = $true
+      CopyOnly = $false; SupportsUser = $true
       DetectPaths = @($dshHome); DetectCommands = @('dsh'); ProjectMarkers = @('.dsh')
       Note = 'follows directory links'
     }
     [pscustomobject]@{
       Key = 'agents'; Label = 'Shared cross-runtime agent skills'
       UserRoot = (Join-Path $agentsHome 'skills'); ProjectFolder = '.agents'
-      Gitignore = '.agents/'; CopyOnly = $false; SupportsUser = $true
+      CopyOnly = $false; SupportsUser = $true
       DetectPaths = @($agentsHome); DetectCommands = @(); ProjectMarkers = @('.agents')
       Note = 'follows directory links'
     }
     [pscustomobject]@{
       Key = 'codex'; Label = 'Codex'
       UserRoot = (Join-Path $HomeDir '.codex\skills'); ProjectFolder = '.codex'
-      Gitignore = $null; CopyOnly = $false; SupportsUser = $true
+      CopyOnly = $false; SupportsUser = $true
       DetectPaths = @((Join-Path $HomeDir '.codex')); DetectCommands = @('codex'); ProjectMarkers = @('.codex')
       Note = ''
     }
     [pscustomobject]@{
       Key = 'claude'; Label = 'Claude Code user skills'
       UserRoot = (Join-Path $HomeDir '.claude\skills'); ProjectFolder = '.claude'
-      Gitignore = $null; CopyOnly = $false; SupportsUser = $true
+      CopyOnly = $false; SupportsUser = $true
       DetectPaths = @((Join-Path $HomeDir '.claude')); DetectCommands = @('claude'); ProjectMarkers = @('.claude')
       Note = 'skill directories only; plugin installation is not covered'
     }
     [pscustomobject]@{
       Key = 'trae'; Label = 'Trae IDE'
       UserRoot = $null; ProjectFolder = '.trae'
-      Gitignore = '.trae/'; CopyOnly = $false; SupportsUser = $false
+      CopyOnly = $false; SupportsUser = $false
       DetectPaths = @((Join-Path $HomeDir '.trae-cn'), (Join-Path $HomeDir '.trae')); DetectCommands = @(); ProjectMarkers = @('.trae')
       Note = 'project only'
     }
     [pscustomobject]@{
       Key = 'codearts'; Label = 'CodeArts (Huawei Cloud)'
       UserRoot = $null; ProjectFolder = '.codeartsdoer'
-      Gitignore = '.codeartsdoer/'; CopyOnly = $true; SupportsUser = $false
+      CopyOnly = $true; SupportsUser = $false
       DetectPaths = @((Join-Path $HomeDir '.codeartsdoer'), (Join-Path $HomeDir '.codearts-doer-for-coding')); DetectCommands = @(); ProjectMarkers = @('.codeartsdoer')
       Note = 'project only; copies real files'
     }
     [pscustomobject]@{
       Key = 'custom'; Label = 'Custom directory (-Path)'
       UserRoot = $null; ProjectFolder = $null
-      Gitignore = $null; CopyOnly = $false; SupportsUser = $false
+      CopyOnly = $false; SupportsUser = $false
       DetectPaths = @(); DetectCommands = @(); ProjectMarkers = @()
       Note = 'needs -Path'
     }
@@ -1240,10 +1218,6 @@ foreach ($entry in $resolvedTargets) {
   }
 
   if ($tool.Key -eq 'codearts') { Update-CodeArtsStatus -ToolRoot $toolRoot }
-
-  if ($tool.Gitignore -and $entry.Scope -eq 'project' -and ![string]::IsNullOrWhiteSpace($ProjectDir)) {
-    Add-GitignoreEntry -ProjectDir $ProjectDir -Entry $tool.Gitignore
-  }
 }
 
 if ($failures.Count -gt 0) {

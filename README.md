@@ -222,7 +222,7 @@ Behavior worth knowing:
 - `-LinkType auto` (default) tries an NTFS directory junction, then a symbolic link. `-LinkType copy` copies real files instead, and re-running refreshes the copies.
 - `-Scope auto` (default) uses user roots for user-capable tools and project roots for Trae and CodeArts. `-Scope project` needs `-Target`.
 - CodeArts ignores directory links, so that tool is always installed by copy, followed by `ProjectSkillStatus.txt` for the installed subset.
-- Project installs append the tool's folder (`.dsh/`, `.agents/`, `.trae/`, `.codeartsdoer/`) to that project's `.gitignore`. `.claude/` and `.codex/` are left alone because they can hold tracked configuration.
+- The installer never touches version control: it does not read, write, or create `.gitignore` (or any other git file). Keeping installed folders out of a commit is the user's decision.
 - An existing real directory is replaced only when it is a previous copy; anything else needs `-Force`. `-Uninstall` removes links, and removes a real directory only when it mirrors the repository or when `-Force` is given.
 - `-Reinstall` deletes the selected entries and installs them again; without it a re-run is idempotent and reports `already in place`. `-Reinstall` and `-Uninstall` cannot be combined.
 - Every install and uninstall is verified by hashing the installed files against the repository.
@@ -238,7 +238,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-sk
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh
 ```
 
-Install for one project instead (links into `.dsh/skills` and appends `.dsh/` to that project's `.gitignore`):
+Install for one project instead (links into `<project>/.dsh/skills`; ignoring that folder is up to you, the installer does not touch `.gitignore`):
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/install-agent-skills.ps1 -Tools dsh -Scope project -Target D:\work\my-app
