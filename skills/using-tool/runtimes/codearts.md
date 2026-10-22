@@ -283,6 +283,23 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 - This block is optional: when it is absent, `subagent-takeover` uses this runtime file's `Subagent Dispatch Capability` default backend. Never invent a value to fill it.
 - Creating or repairing either block is `configuring-plugin`'s job, not the consuming skill's. This file defines only where the blocks live and what shape they take.
 
+## Shared Agent Toolchain Configuration
+
+The same `.agents/my-skills-local-config.md` can carry a third managed block, pinning the tool versions a workspace's runs should use when the machine has several of a tool installed:
+
+```markdown
+<!-- agent-toolchain:start -->
+## Agent Toolchain Configuration
+
+- <tool name>: <version or absolute path>
+<!-- agent-toolchain:end -->
+```
+
+- Same location and same read/append/replace rules as the other blocks; editing one block must preserve the others.
+- The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools the user chose. Never invent a tool or a version.
+- A pinned version or absolute path must resolve on this machine; an uninstalled version or a stale path is malformed, not a value to keep.
+- This item is registered ahead of its consumers: no skill reads it yet. Creating or repairing it is `configuring-plugin`'s job, not the consuming skill's.
+
 ## CodeArts Boundaries
 
 - CodeArts exposes a single `todowrite` tool, not the Claude Code `TaskCreate`/`TaskUpdate`/`TaskList`/`TaskGet` family. Translate tracking intent instead of copying the four-tool pattern.

@@ -294,6 +294,23 @@ Declare the backend (and a concurrency cap) in the project-level `.agents/my-ski
 
 `Max parallel` defaults to `1`, which is the correct value when a local inference server serves one request at a time.
 
+### Toolchain Pins
+
+A machine can have several JDKs or several Node versions installed at once, so a run that builds or tests without saying which one it used is not reproducible. The toolchain item records the tool versions this workspace's runs should use, in the same `.agents/my-skills-local-config.md`:
+
+```markdown
+<!-- agent-toolchain:start -->
+## Agent Toolchain Configuration
+
+- JDK: 17
+- Node: <absolute path or version>
+<!-- agent-toolchain:end -->
+```
+
+The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools you actually chose. `configuring-plugin` probes this machine for candidates (installed JDK directories, `nvm list`, `which java|node|python|mvn|gradle`) and offers them as the options, so a pin is never an uninstalled version or a stale path.
+
+This item is registered ahead of its consumers: no skill reads it yet. Until one does, pinning a toolchain only records the intent.
+
 ## Repository Layout
 
 ```text

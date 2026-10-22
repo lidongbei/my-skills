@@ -25,7 +25,7 @@ Core principle: **this skill owns every create and repair of the plugin's projec
 
 ## Delegation From Other Skills
 
-Other plugin skills resolve and read configuration (output root, dispatch) from the same designated location, but they do not create or repair it. When `coding-workflow`, `subagent-takeover`, or `generating-reqable-docs` reaches a point where it would have written or repaired a managed block, it hands off to this skill. This skill runs the interactive configuration below and returns control **with the Output Contract report**; the invoking skill then continues from the values and states that report names. A delegated run may skip nothing: it reports every registry item, including the config-location ignore item.
+Other plugin skills resolve and read configuration (output root, dispatch; toolchain is registered ahead of its consumers) from the same designated location, but they do not create or repair it. When `coding-workflow`, `subagent-takeover`, or `generating-reqable-docs` reaches a point where it would have written or repaired a managed block, it hands off to this skill. This skill runs the interactive configuration below and returns control **with the Output Contract report**; the invoking skill then continues from the values and states that report names. A delegated run may skip nothing: it reports every registry item, including the config-location ignore item.
 
 ## Configuration Registry
 
@@ -35,6 +35,7 @@ The registered project-level configuration items for this plugin. Treat this tab
 |---|---|---|---|---|
 | Output root | `agent-output-root` | `Output root` = an absolute path | `coding-workflow`, `subagent-takeover`, `generating-reqable-docs` | Required |
 | Dispatch | `agent-dispatch` | `Backend`; `CLI template` when `Backend: cli`; `Max parallel` (default `1`); `Subagent model` | `subagent-takeover` | Optional (absent → runtime default) |
+| Toolchain | `agent-toolchain` | At least one `<tool name>: <version or absolute path>` entry; every value resolves on this machine | Registered for later consumers; no skill consumes it yet | Optional (absent → no pinned toolchain) |
 | Config location ignore | none — a version control ignore rule, not a block | The configuration location file itself is excluded by the workspace's version control, so the local config is never committed | the whole registry: a per-developer file that gets committed stops being per-developer | Required |
 
 The configuration location is per-developer, machine-specific state: it holds absolute paths and runtime-specific backend choices, and the runtime mappings state that the location is ignored. That ignore rule is an invariant to verify, not a fact to assume — a fresh workspace usually has no ignore entry for it, and the first `git add .` then commits a machine-specific file into the shared repository. The rule covers exactly the configuration location file: only that file carries machine-specific state, so ignore the file, never its whole parent directory. A directory-wide rule such as `.agents/` also hides sibling content that is meant to be shared.
@@ -56,7 +57,16 @@ Write managed blocks in exactly this shape:
 - Max parallel: <integer, default 1>
 - Subagent model: inherit | <provider/model>
 <!-- agent-dispatch:end -->
+
+<!-- agent-toolchain:start -->
+## Agent Toolchain Configuration
+
+- JDK: <version or absolute path>
+- Node: <version or absolute path>
+<!-- agent-toolchain:end -->
 ```
+
+The toolchain block is open-ended: keep one `<tool name>: <version or absolute path>` entry per tool the user pins, and keep only the tools the user actually chooses. The example names above are illustrative, not a fixed field list.
 
 The configuration location is defined by the current runtime's `using-tool` mapping (Claude Code: the repository-root, git-ignored file `.agents/my-skills-local-config.md`). Do not read `CLAUDE.md`, `AGENTS.md`, `.trae/`, or any other file for this configuration.
 
@@ -87,6 +97,8 @@ For each block-backed item, assign exactly one state from the `read` result:
 - `malformed` — duplicated blocks, truncated markers, or an invalid value.
 - `legacy-only` — only a block whose name is listed as legacy exists (for example `coding-workflow:artifact-root`). Legacy blocks are not valid configuration and must never be migrated or reused.
 
+For the toolchain item, apply the same four states to the block itself and additionally judge each entry: an entry whose value pins a version that is not installed, or an absolute path that does not exist, makes the block `malformed`. Report the offending entry; do not repair it silently.
+
 Classify the config-location ignore item by asking whether the configuration location **file** is excluded, not its parent directory:
 
 - `valid` — the configuration location file is already excluded by an ignore rule that applies to that exact path, or the workspace is not under a version control root (`.git`), so no ignore rule applies.
@@ -103,6 +115,7 @@ Ask before writing any value; do not re-ask a `valid` item — report it instead
 
 - `missing` required item: use `ask` to let the user choose the value once. Mark the consumed skill's documented default as the recommended option (output-root default: the repository parent directory + `<project name>__agent`).
 - `missing` optional item: use `ask` to let the user set it, skip it, or accept the runtime default; do not write a value silently.
+- Toolchain item, `missing`: this item is per-tool, so ask which tools the user wants pinned before writing anything (a multi-select over the common ones — JDK, Node, Python, Maven, Gradle, Go, Rust — plus a free-text "other"). Probe this machine for candidate values first (installed JDK directories, `nvm list`, `py -0`, `which java|node|python|mvn|gradle`) and present the discovered values as the `ask` options; a value the user typed themselves is always allowed. Ask one question per chosen tool so each pin is an explicit choice. Do not pin a tool the user did not choose, and do not invent a version.
 - `malformed` or `legacy-only`: do not repair or migrate silently. Use `ask` to present the exact conflict and the candidate resolutions (which block to keep, which to delete, or clear to `missing`) and let the user decide. Apply only what the user chose.
 - Config-location ignore item, `missing`: use `ask` to offer adding the ignore rule as the recommended option; do not add it silently. Recommend the rule for the configuration location file (`/.agents/my-skills-local-config.md` under Claude Code) and mark it as the recommended option. If an existing rule ignores a whole parent directory that contains the configuration location, present narrowing it to the file as an alternative option, and do not delete or rewrite the existing rule on your own. This is a workspace-level invariant, so it stays `missing` unless the user chooses it.
 - Config-location ignore item, `malformed`: present the conflicting rule and let the user decide what to do with it.
@@ -117,6 +130,8 @@ Use `edit` to write only the managed block(s) the user chose:
 
 Never touch a block the user did not ask to change, and preserve all content outside the managed blocks.
 
+The toolchain block is open-ended, so editing it never means rewriting the whole block: add, change, or remove only the entry lines for the tools the user chose this run, and preserve every other entry line and the markers exactly.
+
 For the config-location ignore item, use `edit` to add the ignore rule for the configuration location file **only when the user chose it**. Check for an equivalent existing rule first, and append only the missing line: never duplicate an ignore rule or rewrite the file. When the user chose to narrow an existing parent-directory rule instead, replace that one line with the file rule — do not touch any other line.
 
 ### 6. Check
@@ -125,7 +140,8 @@ For the config-location ignore item, use `edit` to add the ignore rule for the c
 
 - the block appears exactly once with intact start/end markers;
 - the output root is an absolute path and is an existing directory or a creatable path (an existing file or non-creatable path is invalid);
-- `Backend:` is one of `native | cli | sequential | manual`; `CLI template` is present when the backend is `cli`; `Max parallel` is an integer ≥ 1.
+- `Backend:` is one of `native | cli | sequential | manual`; `CLI template` is present when the backend is `cli`; `Max parallel` is an integer ≥ 1;
+- each toolchain entry has a non-empty tool name and value, every pinned version or absolute path resolves on this machine, and no tool name appears twice.
 
 For the config-location ignore item, `check` by re-reading the ignore file and confirming a rule excludes the configuration location **file** (cite the matching rule line, or a `git check-ignore` result naming the file). Do not accept a parent-directory rule as evidence. When the workspace is not under version control, cite that as the evidence instead.
 
@@ -162,3 +178,6 @@ Always end with this report, one row per registry item:
 | Editing text outside the managed blocks. | Change only the block content the user chose. |
 | Auto-running `git init` on an output root. | Do not; that decision belongs to the user under the consuming skill. |
 | Skipping the optional dispatch item. | Report it; let the user set or skip it. |
+| Pinning a toolchain version this machine does not have. | Probe first and reject an uninstalled version or a non-existent path; classify the entry `malformed`. |
+| Pinning toolchain tools the user did not choose. | Ask which tools to pin first, then one question per chosen tool. |
+| Rewriting the open-ended toolchain block. | Edit only the entry lines for the chosen tools; preserve every other entry and the markers. |
