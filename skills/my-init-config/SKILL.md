@@ -1,9 +1,9 @@
 ---
-name: configuring-plugin
+name: my-init-config
 description: Use when configuring this plugin's per-project configuration for the current workspace, including first-time setup in a new workspace, upgrading an existing workspace, repairing missing, malformed, duplicated, or legacy configuration blocks, or when another plugin skill needs a managed configuration block created or repaired.
 ---
 
-# Configuring Plugin
+# My Init Config
 
 ## Overview
 
@@ -17,6 +17,7 @@ Core principle: **this skill owns every create and repair of the plugin's projec
 - Do not trigger for ordinary work that merely reads a configured value; act only on configuration tasks (first-time setup, upgrade, repair, or an explicit request to complete configuration).
 - Configure only the plugin's designated project-level configuration location defined by the current runtime mapping. Do not configure or repair any other file.
 - Never silently repair a malformed, duplicated, or legacy configuration. Use `ask` and require the user to decide.
+- Run every `ask` of this configuration in Chinese: the question text, each option `label`, and each option `description` are written in Chinese. Keep this skill's document, the managed blocks, and the Output Contract report in English, and never translate a value that will be written into a block.
 - Do not `git init` the output root or any directory. That decision belongs to the user under the consuming skill's rule.
 - Do not change other skills' behavior and do not invent configuration items outside the registry below.
 - Do not commit, stage, or otherwise version-control the configuration location; the config-location ignore item exists to keep it out of version control.
@@ -113,6 +114,13 @@ Use `todo` to list every registry item with its state. Report `valid` items too,
 
 Ask before writing any value; do not re-ask a `valid` item — report it instead.
 
+Write the question text, every option `label`, and every option `description` in Chinese. Example shape for the optional dispatch item:
+
+- question: 「`agent-dispatch` 配置块缺失，是否持久化调度后端？」
+- options: 「使用运行时默认（推荐）」— 不写入该块，由运行时默认后端决定 / 「持久化为 `native`」— 写入 `Backend: native` / 「本次跳过」— 不写入，保持缺失
+
+Block names, field names, paths, versions, and any other value that gets written stay exactly as they are reported; only the human-facing wording is Chinese.
+
 - `missing` required item: use `ask` to let the user choose the value once. Mark the consumed skill's documented default as the recommended option (output-root default: the repository parent directory + `<project name>__agent`).
 - `missing` optional item: use `ask` to let the user set it, skip it, or accept the runtime default; do not write a value silently.
 - Toolchain item, `missing`: this item is per-tool, so ask which tools the user wants pinned before writing anything (a multi-select over the common ones — JDK, Node, Python, Maven, Gradle, Go, Rust — plus a free-text "other"). Probe this machine for candidate values first (installed JDK directories, `nvm list`, `py -0`, `which java|node|python|mvn|gradle`) and present the discovered values as the `ask` options; a value the user typed themselves is always allowed. Ask one question per chosen tool so each pin is an explicit choice. Do not pin a tool the user did not choose, and do not invent a version.
@@ -168,6 +176,7 @@ Always end with this report, one row per registry item:
 | Mistake | Correction |
 |---|---|
 | Silently picking a default output root. | Use `ask`; present the default only as the recommended option. |
+| Asking in English, or translating a path/version into Chinese. | Write the question and option labels/descriptions in Chinese; leave every value that gets written untouched. |
 | Quietly deleting one of two duplicate blocks. | Present the conflict via `ask`; the user decides. |
 | Treating a legacy `artifact-root` block as usable configuration. | Mark it `legacy-only`; never migrate or reuse it. |
 | Assuming the configuration location is git-ignored in a fresh workspace. | Verify the ignore rule and add it with the user's consent. |

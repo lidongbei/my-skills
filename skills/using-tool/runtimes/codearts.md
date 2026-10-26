@@ -260,7 +260,7 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 - Use `read` to inspect only this file for the managed block defined by the consuming skill.
 - If a resolved, validated output root must be persisted and the file does not exist, use `write` (via `edit`) to create the `.agents/` directory and a file containing exactly that managed block.
 - If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present. Preserve all content outside that block.
-- The configuration location file `.agents/my-skills-local-config.md` is kept out of version control by an ignore rule that names that file: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`. Verifying and adding that rule is `configuring-plugin`'s job, not the consuming skill's.
+- The configuration location file `.agents/my-skills-local-config.md` is kept out of version control by an ignore rule that names that file: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`. Verifying and adding that rule is `my-init-config`'s job, not the consuming skill's.
 - Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not read or use `CLAUDE.md`, `AGENTS.md`, `.codeartsdoer/rules/`, or any other file for this configuration.
 
 ## Shared Agent Dispatch Configuration
@@ -281,7 +281,7 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 - Same location, same read/append/replace rules as the output-root block; the two blocks are independent, and editing one must preserve the other.
 - `Backend` is one of the four values, `CLI template` is required when `Backend: cli`, `Max parallel` defaults to `1`, and `Subagent model` is `inherit` or a `provider/model` pair.
 - This block is optional: when it is absent, `subagent-takeover` uses this runtime file's `Subagent Dispatch Capability` default backend. Never invent a value to fill it.
-- Creating or repairing either block is `configuring-plugin`'s job, not the consuming skill's. This file defines only where the blocks live and what shape they take.
+- Creating or repairing either block is `my-init-config`'s job, not the consuming skill's. This file defines only where the blocks live and what shape they take.
 
 ## Shared Agent Toolchain Configuration
 
@@ -298,7 +298,7 @@ The same `.agents/my-skills-local-config.md` can carry a third managed block, pi
 - Same location and same read/append/replace rules as the other blocks; editing one block must preserve the others.
 - The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools the user chose. Never invent a tool or a version.
 - A pinned version or absolute path must resolve on this machine; an uninstalled version or a stale path is malformed, not a value to keep.
-- This item is registered ahead of its consumers: no skill reads it yet. Creating or repairing it is `configuring-plugin`'s job, not the consuming skill's.
+- This item is registered ahead of its consumers: no skill reads it yet. Creating or repairing it is `my-init-config`'s job, not the consuming skill's.
 
 ## CodeArts Boundaries
 

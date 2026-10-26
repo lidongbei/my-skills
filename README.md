@@ -11,7 +11,7 @@ The plugin root is this repository. Its canonical plugin manifest is:
 Included skills:
 
 - `coding-workflow`
-- `configuring-plugin`
+- `my-init-config`
 - `generating-reqable-docs`
 - `idea-shaping`
 - `subagent-takeover`
@@ -55,7 +55,7 @@ List loaded plugins:
 Invocation modes:
 
 - `coding-workflow`, `generating-reqable-docs`, `idea-shaping`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
-- `configuring-plugin` is model-invocable so it can configure, upgrade, or repair this plugin's per-project configuration for the current workspace. It also handles configuration writes and repairs delegated from other skills.
+- `my-init-config` is model-invocable so it can configure, upgrade, or repair this plugin's per-project configuration for the current workspace. It also handles configuration writes and repairs delegated from other skills.
 - `subagent-takeover` is model-invocable so `coding-workflow` can route to it after the user selects the multiple-subagents execution mode. It still runs only on that route or on explicit user invocation, never from a generic task category.
 - `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
 
@@ -74,7 +74,7 @@ Examples:
 ```
 
 ```text
-/configuring-plugin set up this workspace's plugin configuration
+/my-init-config set up this workspace's plugin configuration
 ```
 
 If a runtime tool rejects a user-only skill because of `disable-model-invocation: true`, the user invocation is still valid. The agent should read the matching `skills/<skill-name>/SKILL.md` file and follow it directly.
@@ -84,7 +84,7 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | Skill | Mode | Use when... |
 |---|---|---|
 | `coding-workflow` | user-only | You explicitly want to plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
-| `configuring-plugin` | model-invocable | You want to configure, upgrade, or repair this plugin's per-project configuration for the current workspace, or another plugin skill needs a managed configuration block created or repaired. |
+| `my-init-config` | model-invocable | You want to configure, upgrade, or repair this plugin's per-project configuration for the current workspace, or another plugin skill needs a managed configuration block created or repaired. |
 | `generating-reqable-docs` | user-only | You explicitly want to generate a Reqable Collection 3.0 JSON interface document from an API definition or reference collection. |
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
 | `subagent-takeover` | model-invocable (routed from `coding-workflow` or explicit invocation) | You selected the multiple-subagents execution mode in `coding-workflow`, or you explicitly want to split an approved plan into human-reviewed subtasks and execute them through a declared dispatch backend. |
@@ -162,7 +162,7 @@ Skill plan: the installer works with groups, and a group is always installed as 
 
 | Group key | Label | Skills |
 |---|---|---|
-| `core` (default) | Core workflow | `coding-workflow`, `subagent-takeover`, `configuring-plugin`, `using-tool` |
+| `core` (default) | Core workflow | `coding-workflow`, `subagent-takeover`, `my-init-config`, `using-tool` |
 | `documents` | Documents | `generating-reqable-docs` |
 | `ideas-memory` | Ideas | `idea-shaping` |
 
@@ -307,7 +307,7 @@ A machine can have several JDKs or several Node versions installed at once, so a
 <!-- agent-toolchain:end -->
 ```
 
-The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools you actually chose. `configuring-plugin` probes this machine for candidates (installed JDK directories, `nvm list`, `which java|node|python|mvn|gradle`) and offers them as the options, so a pin is never an uninstalled version or a stale path.
+The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools you actually chose. `my-init-config` probes this machine for candidates (installed JDK directories, `nvm list`, `which java|node|python|mvn|gradle`) and offers them as the options, so a pin is never an uninstalled version or a stale path.
 
 This item is registered ahead of its consumers: no skill reads it yet. Until one does, pinning a toolchain only records the intent.
 
@@ -321,7 +321,7 @@ my-skills/
 ├── skills/
 │   ├── coding-workflow/
 │   │   └── SKILL.md
-│   ├── configuring-plugin/
+│   ├── my-init-config/
 │   │   └── SKILL.md
 │   ├── generating-reqable-docs/
 │   │   └── SKILL.md

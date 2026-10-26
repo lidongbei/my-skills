@@ -49,7 +49,7 @@ See `adapters/agents/AGENTS.md` for the shared portable layout.
 ## Approved Skills
 
 - `coding-workflow`
-- `configuring-plugin`
+- `my-init-config`
 - `generating-reqable-docs`
 - `idea-shaping`
 - `subagent-takeover`

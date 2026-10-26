@@ -43,11 +43,11 @@ Each runtime mapping defines one project-level location for shared output-root c
 Resolve the output root for the current session, in this order:
 
 1. If a root was already resolved in this session and the user has not explicitly supplied a different path, reuse it.
-2. If the user explicitly gave a directory in the invocation or an earlier message, use it after validating it. To persist that value, delegate the write to `configuring-plugin`; do not write the managed block here.
+2. If the user explicitly gave a directory in the invocation or an earlier message, use it after validating it. To persist that value, delegate the write to `my-init-config`; do not write the managed block here.
 3. Otherwise, read the current runtime mapping's project-level location. If it contains exactly one valid managed block with a nonempty absolute `Output root` path, use that path after validating it.
-4. If the designated location has no managed block, or holds a malformed, duplicated, or legacy-only configuration, hand off to `configuring-plugin` to create or repair the output-root configuration interactively, then use the value it reports.
+4. If the designated location has no managed block, or holds a malformed, duplicated, or legacy-only configuration, hand off to `my-init-config` to create or repair the output-root configuration interactively, then use the value it reports.
 
-Creating or repairing the managed block is owned by `configuring-plugin`; `coding-workflow` only reads and validates the value. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. Do not silently repair a malformed or duplicated block, fall back to another file, or overwrite the designated location; that repair is `configuring-plugin`'s delegated job, decided by the user.
+Creating or repairing the managed block is owned by `my-init-config`; `coding-workflow` only reads and validates the value. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. Do not silently repair a malformed or duplicated block, fall back to another file, or overwrite the designated location; that repair is `my-init-config`'s delegated job, decided by the user.
 
 Paths under the output root:
 
@@ -273,7 +273,7 @@ Only options 1 and 2 authorize implementation. Free-text plan changes are a plan
 
 If the user chooses option 2, route to `subagent-takeover` immediately after this step by loading it with the runtime `Skill` tool (`Skill(skill: "my-skills:subagent-takeover")`) and then following its instructions: the coordinator skill reads this saved plan, splits it into a human-reviewable `<output root>/subTasks/YYYY-MM-DD-<topic>.md` document, waits for user approval, then dispatches and validates subagents. Do not ask the user to invoke `/subagent-takeover` again; this selection is the routing authorization. Do not perform subagent dispatch, splitting, or structured-feedback validation inline here; hand off to `subagent-takeover` and let it own that flow. If the runtime `Skill` tool cannot load it, read `skills/subagent-takeover/SKILL.md` directly and follow it.
 
-Before that hand-off, if the saved plan or dispatch configuration is missing or malformed, route to `configuring-plugin` to create or repair the output-root and dispatch configuration interactively; `coding-workflow` does not write those managed blocks itself.
+Before that hand-off, if the saved plan or dispatch configuration is missing or malformed, route to `my-init-config` to create or repair the output-root and dispatch configuration interactively; `coding-workflow` does not write those managed blocks itself.
 
 When the user supplies plan changes as free text instead of selecting option 1 or 2:
 

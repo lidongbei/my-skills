@@ -29,7 +29,7 @@ into the target location Trae is configured to scan.
 Current approved skills:
 
 - `coding-workflow`
-- `configuring-plugin`
+- `my-init-config`
 - `generating-reqable-docs`
 - `idea-shaping`
 - `subagent-takeover`

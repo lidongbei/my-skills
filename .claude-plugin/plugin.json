@@ -1,6 +1,6 @@
 {
   "name": "my-skills",
-  "description": "Personal agent skills plugin containing coding-workflow, configuring-plugin, idea-shaping, subagent-takeover, writing-skills, generating-reqable-docs, and mandatory runtime adapter using-tool.",
+  "description": "Personal agent skills plugin containing coding-workflow, my-init-config, idea-shaping, subagent-takeover, writing-skills, generating-reqable-docs, and mandatory runtime adapter using-tool.",
   "version": "0.1.0",
   "author": {
     "name": "Administrator"
