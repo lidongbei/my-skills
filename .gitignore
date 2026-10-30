@@ -1,6 +1,7 @@
 # IDE / editor state
 .trae/
 .idea/
+.claude/
 
 # Per-developer local agent configuration (machine-specific output root etc.)
 /.agents/my-skills-local-config.md
