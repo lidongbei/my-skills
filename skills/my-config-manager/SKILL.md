@@ -72,6 +72,13 @@ The `Records` field of the `agent-output-root` block fixes how the output root's
 
 Ask the disposition as its own question, right after the output-root value — the path and the disposition are two decisions. When the chosen root is inside a version-controlled workspace, `ignored-in-workspace` is the recommended option (records are per-project working state and should not enter the shared history by default), with `committed-in-workspace` and `standalone-repo` as alternatives. For a root outside the workspace, or a workspace without version control, offer `standalone-repo` and `unmanaged` and mark neither as recommended. Never offer a disposition the path cannot support — `committed-in-workspace` and `ignored-in-workspace` are meaningless outside a version-controlled workspace.
 
+Write that question and every option `label`/`description` in Chinese, like every other configuration `ask`; only the value written into the block stays as it is (`Records: ignored-in-workspace`). Example shape for a root inside a version-controlled workspace:
+
+- question: 「输出根的记录如何纳入版本控制？」
+- options: 「在工作仓库中忽略（推荐）」— 写入 `Records: ignored-in-workspace`，并为输出根路径添加忽略规则，记录留在本地、不进入提交 / 「随工作仓库提交」— 写入 `Records: committed-in-workspace`，计划与完成记录跟随工作仓库提交 / 「输出根独立建库」— 写入 `Records: standalone-repo`，在输出根执行 `git init`，记录只提交到该仓库 / 「不纳入版本控制」— 写入 `Records: unmanaged`，记录不作版本管理
+
+For a root outside the workspace, or a workspace without version control, the same question offers only the last two labels, with no recommended marker.
+
 The disposition has side effects this skill owns, applied only because the user chose the disposition — the ask is the consent:
 
 - `ignored-in-workspace` → add an ignore rule for exactly the output-root path, with the config-location ignore item's discipline: check for an equivalent rule first, append only the missing line, never rewrite the file.
@@ -329,7 +336,7 @@ Re-check the config-location ignore item instead of assuming the earlier answer 
 
 ### U7. Records disposition change
 
-The disposition governs side effects, so show the current state before asking: the configured value, and for `ignored-in-workspace` whether the ignore rule actually covers the output-root path (`git check-ignore`), for `standalone-repo` whether the root is a git repository (`git -C "<root>" rev-parse --show-toplevel`). Then ask the new disposition with the option set for the root's location (see Records disposition), with "keep the current disposition" as the default option. Apply only what the choice implies:
+The disposition governs side effects, so show the current state before asking: the configured value, and for `ignored-in-workspace` whether the ignore rule actually covers the output-root path (`git check-ignore`), for `standalone-repo` whether the root is a git repository (`git -C "<root>" rev-parse --show-toplevel`). Then ask the new disposition with the Chinese option shape and the option set for the root's location (see Records disposition), adding 「保持当前处置」 as the default option. Apply only what the choice implies:
 
 - to `ignored-in-workspace` → add the ignore rule for exactly the output-root path;
 - to `standalone-repo` → `git init "<output root>"` when it is not already a repository;
@@ -386,7 +393,7 @@ Always end with this report, one row per registry item:
 | Reading a legacy configuration location as if it were the live configuration. | Harvest candidate values only; resolve through `ask`; leave the legacy file untouched unless the user chooses otherwise. |
 | Presenting every popular toolchain before detecting the project's languages. | Detect marker files first, then ask only about the tools the project's languages need. |
 | Pinning a version for a language the project does not use, or skipping a declared version silently. | Ask per detected language; offer the repository-declared version first and state when it is not installed. |
-| Asking in English, or translating a path/version into Chinese. | Write the question and option labels/descriptions in Chinese; leave every value that gets written untouched. |
+| Asking in English, or translating a path/version into Chinese. | Write the question and option labels/descriptions in Chinese; leave every value that gets written untouched. This covers the `Records` disposition question too: the labels are Chinese (「在工作仓库中忽略（推荐）」…), the written value stays `ignored-in-workspace`. |
 | Quietly deleting one of two duplicate blocks. | Present the conflict via `ask`; the user decides. |
 | Treating a legacy `artifact-root` block as usable configuration. | Mark it `legacy-only`; never migrate or reuse it. |
 | Assuming the configuration location is git-ignored in a fresh workspace. | Verify the ignore rule and add it with the user's consent. |
