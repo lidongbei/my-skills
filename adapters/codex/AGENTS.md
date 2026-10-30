@@ -32,7 +32,7 @@ into one of:
 Current approved skills:
 
 - `coding-workflow`
-- `my-init-config`
+- `my-config-manager`
 - `generating-reqable-docs`
 - `idea-shaping`
 - `subagent-takeover`
@@ -53,4 +53,4 @@ Use each skill's intent and workflow, not necessarily its exact Claude Code tool
 
 ## Output Root Configuration
 
-`coding-workflow` and `generating-reqable-docs` share an output root. The value is machine-specific and stored per-developer in the git-ignored `.agents/my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. It is never written into the shared `AGENTS.md`.
+`coding-workflow` and `generating-reqable-docs` share an output root. The recommended default is `<repository root>/.agent-output`, inside the working repository, so a single-folder workspace can see and manage the records. The value is stored per-developer in the git-ignored `.my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. The block also records how the records are versioned: the `Records` disposition is `ignored-in-workspace` by default, `committed-in-workspace`, `standalone-repo`, or `unmanaged`. It is never written into the shared `AGENTS.md`.

@@ -26,28 +26,29 @@ Non-trivial means a wrong edit could affect behavior, touch multiple files, requ
 
 ### Output Root
 
-Plan and completion records are saved under a configurable **output root**, not inside the working repository. The same output-root configuration is shared by `coding-workflow`, `generating-reqable-docs`, and `subagent-takeover`.
+Plan and completion records are saved under a configurable **output root**. The same output-root configuration is shared by `coding-workflow`, `generating-reqable-docs`, and `subagent-takeover`.
 
-Default output root: the parent of the current repository root plus `<project name>__agent`, where `<project name>` is the repository directory name. Example: repository `D:\AI\my-skills` → default `D:\AI\my-skills__agent`.
+Default output root: `<repository root>/.agent-output`, inside the working repository, so a single-folder workspace can see and manage the records. An absolute path outside the workspace (for example the repository's parent directory plus `<project name>__agent`) is also valid when the user explicitly chooses it.
 
-Each runtime mapping defines one project-level location for shared output-root configuration. Read and update only that location; do not guess, scan, or modify other instruction/configuration files. The managed configuration block lives in the git-ignored local markdown file designated by the runtime mapping (`.agents/my-skills-local-config.md`):
+Each runtime mapping defines one project-level location for shared output-root configuration. Read and update only that location; do not guess, scan, or modify other instruction/configuration files. The managed configuration block lives in the git-ignored local markdown file designated by the runtime mapping (`.my-skills-local-config.md`):
 
 ```markdown
 <!-- agent-output-root:start -->
 ## Agent Output Configuration
 
 - Output root: `<absolute path>`
+- Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 ```
 
 Resolve the output root for the current session, in this order:
 
 1. If a root was already resolved in this session and the user has not explicitly supplied a different path, reuse it.
-2. If the user explicitly gave a directory in the invocation or an earlier message, use it after validating it. To persist that value, delegate the write to `my-init-config`; do not write the managed block here.
-3. Otherwise, read the current runtime mapping's project-level location. If it contains exactly one valid managed block with a nonempty absolute `Output root` path, use that path after validating it.
-4. If the designated location has no managed block, or holds a malformed, duplicated, or legacy-only configuration, hand off to `my-init-config` to create or repair the output-root configuration interactively, then use the value it reports.
+2. If the user explicitly gave a directory in the invocation or an earlier message, use it after validating it. To persist that value, delegate the write to `my-config-manager`; do not write the managed block here.
+3. Otherwise, read the current runtime mapping's project-level location. If it contains exactly one valid managed block with a nonempty absolute `Output root` path and a valid `Records` disposition, use that path after validating it.
+4. If the designated location has no managed block, or holds a malformed, duplicated, or legacy-only configuration, hand off to `my-config-manager` to create or repair the output-root configuration interactively, then use the value it reports.
 
-Creating or repairing the managed block is owned by `my-init-config`; `coding-workflow` only reads and validates the value. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. Do not silently repair a malformed or duplicated block, fall back to another file, or overwrite the designated location; that repair is `my-init-config`'s delegated job, decided by the user.
+Creating or repairing the managed block is owned by `my-config-manager`; `coding-workflow` only reads and validates the value. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. Do not silently repair a malformed or duplicated block, fall back to another file, or overwrite the designated location; that repair is `my-config-manager`'s delegated job, decided by the user.
 
 Paths under the output root:
 
@@ -56,7 +57,14 @@ Paths under the output root:
 <output root>/complete/YYYY-MM-DD-<topic>.md
 ```
 
-Git: do not `git init` the output root automatically. Before writing into it, run `git -C "<output root>" rev-parse --show-toplevel`. If it resolves to a directory other than the output root, do not use or commit into that parent repository; use using-tool's `ask` action to require a separate output root. If the command fails, the output root currently has no git repository; the first time this happens in a session, use using-tool's `ask` action to ask the user whether to run `git init "<output root>"`. If the user agrees, run `git init` and treat the output root as a git repository for the rest of the session. If the user declines, do not run `git init` and do not ask again for the rest of the session. Commit plans and completion records in the output-root repository only when the output root is a git repository (the user agreed to initialize it or it already had one); otherwise skip the commit and treat it as ignored. Commit plans and completion records in the output-root repository, not the working repository. This Git requirement applies only to `coding-workflow` plan and completion records; it does not require `generating-reqable-docs` outputs to be committed.
+Git: the block's `Records` line fixes how the plans and completion records relate to version control — follow the configured disposition, never the path's location alone:
+
+- **`committed-in-workspace`**: commit plans and completion records in the working repository, following its existing rules. If the working repository ignores the output root (for example `git check-ignore -q "<output root>"` succeeds), do not force-add it: leave the records uncommitted, say so, and report the mismatch — the disposition and reality disagree, and a `my-config-manager` Modify run resolves it.
+- **`ignored-in-workspace`**: never commit the records; they stay local by design. If `git check-ignore` shows the output root is not actually ignored, report the mismatch — writing the ignore rule is `my-config-manager`'s side effect, not this skill's.
+- **`standalone-repo`**: commit plans and completion records in the output-root repository (`git -C "<output root>" ...`). If the output root is not a git repository, the disposition was never applied — report it and delegate to `my-config-manager` instead of running `git init` here.
+- **`unmanaged`**: skip the commit and say the records stay unversioned.
+
+Refuse an output root that is the working repository root itself — records need their own directory — and use using-tool's `ask` action to require a subdirectory. Never commit records that live outside the working repository into the working repository, and never commit into an unrelated parent repository. This Git requirement applies only to `coding-workflow` plan and completion records; it does not require `generating-reqable-docs` outputs to be committed.
 
 ### 1. Plan First
 
@@ -252,7 +260,7 @@ After explicit approval:
    - ordered steps, dependencies, invariants, and explicit non-changes are sufficient for a later agent to implement without re-deciding confirmed choices;
    - no unconfirmed fact is presented as a confirmed decision.
 3. Fix missing detail or ask the necessary question before saving. Do not save a summary-only plan.
-4. Commit the checked plan in the output-root repository if the output root is a git repository (per the `Output Root` step); if the output root has no git repository (the user declined initialization), skip the commit and treat it as ignored. Then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
+4. Commit the checked plan in the repository that owns the output root — the working repository when the output root is inside it — following the `Output Root` git rule. If that repository does not commit the records (no git repository, or the output root is ignored), skip the commit and treat it as ignored. Then use using-tool's `ask` action to make the user choose the execution mode before implementation unless the user has already explicitly specified it.
 
 Do not ask the user to type `Main agent` or `Multiple subagents` in free text. The execution mode choice must be a structured `ask` choice.
 
@@ -273,14 +281,14 @@ Only options 1 and 2 authorize implementation. Free-text plan changes are a plan
 
 If the user chooses option 2, route to `subagent-takeover` immediately after this step by loading it with the runtime `Skill` tool (`Skill(skill: "my-skills:subagent-takeover")`) and then following its instructions: the coordinator skill reads this saved plan, splits it into a human-reviewable `<output root>/subTasks/YYYY-MM-DD-<topic>.md` document, waits for user approval, then dispatches and validates subagents. Do not ask the user to invoke `/subagent-takeover` again; this selection is the routing authorization. Do not perform subagent dispatch, splitting, or structured-feedback validation inline here; hand off to `subagent-takeover` and let it own that flow. If the runtime `Skill` tool cannot load it, read `skills/subagent-takeover/SKILL.md` directly and follow it.
 
-Before that hand-off, if the saved plan or dispatch configuration is missing or malformed, route to `my-init-config` to create or repair the output-root and dispatch configuration interactively; `coding-workflow` does not write those managed blocks itself.
+Before that hand-off, if the saved plan or dispatch configuration is missing or malformed, route to `my-config-manager` to create or repair the output-root and dispatch configuration interactively; `coding-workflow` does not write those managed blocks itself.
 
 When the user supplies plan changes as free text instead of selecting option 1 or 2:
 
 1. Stop the execution path. Do not perform any implementation step.
 2. If the user selected this path without supplying concrete changes, use `ask` to collect them.
 3. Use the saved plan file as the read-only source for a complete working plan. Revise every affected section, including `Requirements Traceability`, `Implementation Handoff`, `Key Decisions and Changes`, and `Self-Review`; the prior approval is no longer valid. Do not update the saved plan file yet.
-4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the output-root repository if the output root is a git repository (per the `Output Root` step); otherwise skip the commit. Do not amend or overwrite the prior plan commit.
+4. Return to Step 3. After the user reapproves and all Step 4 Human-required decisions are resolved, update the same saved plan file and create a new plan-revision commit in the repository that owns the output root, following the `Output Root` git rule; otherwise skip the commit. Do not amend or overwrite the prior plan commit.
 5. Ask the execution-mode question again. Do not implement until the user selects option 1 or 2.
 
 ### 6. Risk-Sized Loops
@@ -321,6 +329,8 @@ Completion results, when recorded, go under:
 
 Use the same `<topic>` as the saved plan when one exists; otherwise use a concise kebab-case task topic. If the workflow has a saved plan file, start the completion record with a link to that plan.
 
+Before presenting the gate, use `run` to check whether each repository this gate could commit into already is a git repository — the working repository, and the output-root repository when the output root is external — with `git -C "<repository>" rev-parse --is-inside-work-tree`. Do not guess the git state from project files. When the working repository has no git repository, present the no-git gate instead of offering a commit that the `Output Root` git rule would silently skip.
+
 The `ask` prompt must be:
 
 > 修改和验证已完成，请选择下一步（必须明确选择其中一项）：
@@ -330,9 +340,26 @@ Present these Chinese options in this order. For options 2 and 3, include the co
 | Option | Meaning | Next action |
 |---|---|---|
 | 1. 提交 | 只提交本次完成的改动。 | Use `run` to inspect status, commit relevant changes, then report the commit hash. |
-| 2. 记录结果并提交 | 将完成结果保存到 `<output root>/complete/YYYY-MM-DD-<topic>.md`，然后提交。 | Use `edit` to create/update the completion record, use `run` to commit relevant changes, then report the result path and commit hash. If the output root has no git repository (the user declined initialization), write the completion record but skip committing it, and report that fact. |
+| 2. 记录结果并提交 | 将完成结果保存到 `<output root>/complete/YYYY-MM-DD-<topic>.md`，然后提交。 | Use `edit` to create/update the completion record, use `run` to commit relevant changes per the `Output Root` git rule, then report the result path and commit hash. If the output root's repository does not commit the records (no git repository, or the output root is ignored), write the completion record but skip committing it, and report that fact. |
 | 3. 记录结果 | 将完成结果保存到 `<output root>/complete/YYYY-MM-DD-<topic>.md`，但不提交。 | Use `edit` to create/update the completion record, then report the result path and state that changes remain uncommitted. |
 | 4. 保持现状 | 不记录结果、不提交、不推送。 | Report changed files and validation evidence; state that changes remain uncommitted. |
+| 5. 启动开发环境 | 用项目自身的开发命令启动本地开发环境，供你手动验收本次改动；不提交、不写完成记录。 | Detect the project's own development command, start it as a background job, wait for a bounded readiness signal, then report the command, the background handle, the port/URL when the app exposes one, and how to stop it; then re-ask this gate without this option. |
+
+When the working repository is not a git repository, replace options 1 and 2 with these initialization options and keep options 3–5 unchanged in meaning:
+
+| Option | Meaning | Next action |
+|---|---|---|
+| 1. 初始化 git 并提交 | 工作仓库还不是 git 仓库：先 `git init`，再提交本次完成的改动。 | Use `run` to run `git init` in the working repository, then commit relevant changes, and report the init result, the repository path, and the commit hash. |
+| 2. 初始化 git、记录结果并提交 | 先 `git init` 工作仓库，再把完成结果保存到 `<output root>/complete/YYYY-MM-DD-<topic>.md` 并提交。 | Use `run` to run `git init` in the working repository, use `edit` to create/update the completion record, then commit the working-repository changes and the record per the `Output Root` git rule, and report the init result, the result path, and the commit hash(es). If the output root's repository cannot commit the record, write it and skip that commit, and report that fact. |
+
+No-git gate rules:
+
+- Run `git init` only after the user selects one of the two initialization options; never initialize a repository silently.
+- If `git init` fails, report the failure, perform the matching non-commit fallback (option 4 for 初始化 git 并提交, option 3 for 初始化 git、记录结果并提交), then re-ask the gate; do not claim the changes were committed.
+- Choosing 记录结果 or 保持现状 means the user declined initialization: do not run `git init`, do not ask again for the rest of the session, and state that the changes remain uncommitted.
+- This gate's `git init` applies to the working repository only. When the output root is external, its record repository stays governed by the `Output Root` git rule.
+
+Option 5 is a verification aid, not a completion action: it never commits, records, or replaces this gate. Detect the command from the project itself (`package.json` `dev`/`start`/`serve` scripts, `docker compose up`, `bootRun`/`spring-boot:run`, `air`, `cargo run`, `go run ./cmd/...`, and so on); when the project offers several plausible commands or none, use `ask` to have the user pick or type the exact command — do not guess. Start it as a background job with `run` in whatever way the runtime supports (a resumed background job, a detached process, or a separate terminal), read its log for the readiness signal, and never block this gate on it. Wait for that signal (a `listening`/`ready` line, or the port accepting connections) with a bounded timeout before reporting. On timeout, report the tail of the log and that it is still starting; do not claim it started. If a development environment from this session is already running, say so and skip this option instead of starting a second copy. After reporting, re-ask the same gate without this option so the commit or record choice is still made explicitly. When the user leaves this gate or the session ends, state that the environment is still running, with its handle and stop command; do not stop or leave it undisclosed silently.
 
 Completion record template:
 
@@ -362,7 +389,7 @@ Plan: [<plan title>](../plans/YYYY-MM-DD-<topic>.md) <!-- include only when a sa
 - Commit:
 ```
 
-Do not commit, push, or write a completion record silently. If there are no uncommitted changes, state that and skip this gate.
+Do not commit, push, write a completion record, or initialize a repository silently. If there are no uncommitted changes, state that and skip this gate.
 
 ## Common Mistakes
 
@@ -383,5 +410,10 @@ Do not commit, push, or write a completion record silently. If there are no unco
 | Letting an implementation agent re-decide confirmed choices | Require it to read the saved plan and honor traceability, invariants, explicit non-changes, and the deviation protocol |
 | Accepting a silent implementation deviation | Compare the candidate against traceability rows and reject or return to plan revision when a material deviation lacks approval |
 | Completion without evidence | Report checks and results |
-| Ending with uncommitted changes | After validation, use the post-validation completion gate to offer commit / record result and commit / record result / keep current state |
+| Ending with uncommitted changes | After validation, use the post-validation completion gate to offer commit / record result and commit / record result / keep current state / start dev environment last as a verification aid |
+| Offering a commit the repository cannot perform | Check the commit repository's git state first; in a non-git project offer 初始化 git 并提交 instead of a commit the `Output Root` git rule would silently skip |
+| Initializing git silently | Run `git init` only after the user selects an initialization option; on failure report it and use the matching non-commit fallback |
+| Guessing the development command, or starting a second dev server | Detect the project's own script; ask when several or none fit; when one is already running from this session, report it instead of starting another |
+| Claiming the dev environment started before it is ready | Wait for the ready line or a listening port; on timeout report the log tail and say it is still starting |
+| Letting the dev environment replace the commit gate | 启动开发环境 never commits or records; report it, then re-ask the gate without that option |
 | Over-exploring simple tasks | Match search tool to task scope; run one `find` (Grep or MCP `search_code`) before dispatching `agent` (Explore); reserve `agent` for genuinely cross-module or uncertain-scope investigation |

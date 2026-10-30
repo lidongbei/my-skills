@@ -247,25 +247,27 @@ Rules:
 
 ## Shared Agent Output Configuration
 
-For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.agents/my-skills-local-config.md`. The consuming skill reads/writes this managed block:
+For shared output-root persistence used by `coding-workflow` and `generating-reqable-docs`, the project-level configuration location is the repository-root, git-ignored local file `.my-skills-local-config.md`. The consuming skill reads/writes this managed block:
 
 ```markdown
 <!-- agent-output-root:start -->
 ## Agent Output Configuration
 
 - Output root: `<absolute path>`
+- Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 ```
 
 - Use `read` to inspect only this file for the managed block defined by the consuming skill.
-- If a resolved, validated output root must be persisted and the file does not exist, use `write` (via `edit`) to create the `.agents/` directory and a file containing exactly that managed block.
+- If a resolved, validated output root must be persisted and the file does not exist, use `write` (via `edit`) to create the file at the repository root containing exactly that managed block.
 - If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present. Preserve all content outside that block.
-- The configuration location file `.agents/my-skills-local-config.md` is kept out of version control by an ignore rule that names that file: the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`. Verifying and adding that rule is `my-init-config`'s job, not the consuming skill's.
+- In a version-controlled workspace, the configuration location file `.my-skills-local-config.md` is kept out of version control by an ignore rule that names that file (a workspace without version control has no such rule to add): the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`. Verifying and adding that rule is `my-config-manager`'s job, not the consuming skill's.
+- The output root may be inside the working repository: the recommended default is `<repository root>/.agent-output`, which keeps the records visible to and manageable from a single-folder workspace. The block's `Records` line fixes how the records relate to version control — `ignored-in-workspace` (the recommended disposition), `committed-in-workspace`, `standalone-repo`, or `unmanaged`; the consuming skill's Git rule follows it, and `my-config-manager` owns the value and its side effects (the ignore rule, the `git init`). A block without the `Records` line is an old-shape block: treat it as malformed and hand off to `my-config-manager`, which repairs it by asking only the disposition.
 - Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not read or use `CLAUDE.md`, `AGENTS.md`, `.codeartsdoer/rules/`, or any other file for this configuration.
 
 ## Shared Agent Dispatch Configuration
 
-`subagent-takeover` persists its dispatch backend in the same `.agents/my-skills-local-config.md` file, as a second managed block:
+`subagent-takeover` persists its dispatch backend in the same `.my-skills-local-config.md` file, as a second managed block:
 
 ```markdown
 <!-- agent-dispatch:start -->
@@ -281,11 +283,11 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 - Same location, same read/append/replace rules as the output-root block; the two blocks are independent, and editing one must preserve the other.
 - `Backend` is one of the four values, `CLI template` is required when `Backend: cli`, `Max parallel` defaults to `1`, and `Subagent model` is `inherit` or a `provider/model` pair.
 - This block is optional: when it is absent, `subagent-takeover` uses this runtime file's `Subagent Dispatch Capability` default backend. Never invent a value to fill it.
-- Creating or repairing either block is `my-init-config`'s job, not the consuming skill's. This file defines only where the blocks live and what shape they take.
+- Creating or repairing either block is `my-config-manager`'s job, not the consuming skill's. This file defines only where the blocks live and what shape they take.
 
 ## Shared Agent Toolchain Configuration
 
-The same `.agents/my-skills-local-config.md` can carry a third managed block, pinning the tool versions a workspace's runs should use when the machine has several of a tool installed:
+The same `.my-skills-local-config.md` can carry a third managed block, pinning the tool versions a workspace's runs should use when the machine has several of a tool installed:
 
 ```markdown
 <!-- agent-toolchain:start -->
@@ -298,7 +300,8 @@ The same `.agents/my-skills-local-config.md` can carry a third managed block, pi
 - Same location and same read/append/replace rules as the other blocks; editing one block must preserve the others.
 - The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools the user chose. Never invent a tool or a version.
 - A pinned version or absolute path must resolve on this machine; an uninstalled version or a stale path is malformed, not a value to keep.
-- This item is registered ahead of its consumers: no skill reads it yet. Creating or repairing it is `my-init-config`'s job, not the consuming skill's.
+- Pins follow the project's actual languages: `my-config-manager` detects them from the project's marker files, prefers a version the repository itself declares, then an installed version on this machine, and asks per detected language. Never pin a tool for a language the project does not use.
+- This item is registered ahead of its consumers: no skill reads it yet. Creating, repairing, or correcting it (a stale or unrunnable pin) is `my-config-manager`'s job, not the consuming skill's.
 
 ## CodeArts Boundaries
 

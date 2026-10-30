@@ -49,7 +49,7 @@ See `adapters/agents/AGENTS.md` for the shared portable layout.
 ## Approved Skills
 
 - `coding-workflow`
-- `my-init-config`
+- `my-config-manager`
 - `generating-reqable-docs`
 - `idea-shaping`
 - `subagent-takeover`
@@ -68,7 +68,7 @@ That runtime file maps portable tool-action aliases (`ask`, `read`, `find`, `edi
 
 ## Output Root Configuration
 
-`coding-workflow` and `generating-reqable-docs` share an output root. The value is machine-specific and stored per-developer in the git-ignored `.agents/my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. It is never written into the shared `CLAUDE.md`/`AGENTS.md` or `.codeartsdoer/`.
+`coding-workflow` and `generating-reqable-docs` share an output root. The recommended default is `<repository root>/.agent-output`, inside the working repository, so a single-folder workspace can see and manage the records. The value is stored per-developer in the git-ignored `.my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. The block also records how the records are versioned: the `Records` disposition is `ignored-in-workspace` by default, `committed-in-workspace`, `standalone-repo`, or `unmanaged`. It is never written into the shared `CLAUDE.md`/`AGENTS.md` or `.codeartsdoer/`.
 
 ## CodeArts-Specific Capabilities
 
@@ -97,4 +97,4 @@ CodeArts provides several tools that have no direct equivalent in Claude Code, C
 
 ## Policy
 
-`D:\AI\my-skills` is the source project for this single plugin. Avoid duplicating the skills into a second location; if a copy is required, sync it back from this repository rather than editing it in place.
+`D:\AI\my-skills` is the source project for this single plugin. Avoid duplicating the skills into a second location; if a copy is required, sync it back from this repository rather than editing it in place.

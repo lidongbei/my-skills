@@ -21,7 +21,7 @@ skills/<skill-name>/SKILL.md
 This plugin currently contains seven skills:
 
 - `coding-workflow`
-- `my-init-config`
+- `my-config-manager`
 - `idea-shaping`
 - `subagent-takeover`
 - `writing-skills`
@@ -56,7 +56,7 @@ Rules:
 - Existing user-only skills use user-only mode with `disable-model-invocation: true`.
 - `subagent-takeover` is model-invocable by user decision so `coding-workflow` can route to it after the user selects the multiple-subagents execution mode. Its description must stay narrowly trigger-focused: both the routing case and explicit user invocation are named, and no generic task category is used as a trigger.
 - `using-tool` is model-invocable by user decision, is mandatory before using any skill from this plugin, and must not include `disable-model-invocation: true`.
-- `my-init-config` is model-invocable by user decision: it owns every create and repair of this plugin's per-project configuration blocks, and other skills delegate their configuration writes and repairs to it. It must not include `disable-model-invocation: true`, and its description must stay trigger-focused.
+- `my-config-manager` is model-invocable by user decision: it owns the initialization, modification, and validation of this plugin's per-project configuration blocks, and other skills delegate their configuration writes and repairs to it. It must not include `disable-model-invocation: true`, and its description must stay trigger-focused.
 - User-only means the model must not invoke the skill on its own through the runtime `Skill` tool; a user slash-command invocation is still valid.
 - If a user explicitly invokes a user-only skill and the runtime `Skill` tool rejects it because of `disable-model-invocation: true`, the agent should read `skills/<skill-name>/SKILL.md` directly and follow it instead of treating the user invocation as invalid.
 - `writing-skills` uses agent-mode planning: do not use plan mode; ask targeted clarification questions and output the plan directly in chat.
@@ -88,7 +88,7 @@ Validation must fail if:
 - `skills/` is missing.
 - A direct child of `skills/` lacks `SKILL.md`.
 - `skills/plugins` exists.
-- Any direct skill directory other than `coding-workflow`, `my-init-config`, `generating-reqable-docs`, `idea-shaping`, `subagent-takeover`, `writing-skills`, or `using-tool` exists.
+- Any direct skill directory other than `coding-workflow`, `my-config-manager`, `generating-reqable-docs`, `idea-shaping`, `subagent-takeover`, `writing-skills`, or `using-tool` exists.
 - A skill frontmatter `name` is missing or does not match its directory.
 - A user-only skill frontmatter `description` is missing, blank, or does not require explicit invocation.
 - A model-invocable skill frontmatter `description` is missing, blank, or does not start with `Use when`.

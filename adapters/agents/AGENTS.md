@@ -23,7 +23,7 @@ into:
 Current approved skills:
 
 - `coding-workflow`
-- `my-init-config`
+- `my-config-manager`
 - `generating-reqable-docs`
 - `idea-shaping`
 - `subagent-takeover`

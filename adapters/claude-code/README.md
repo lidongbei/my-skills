@@ -46,7 +46,7 @@ That runtime file maps portable tool-action instructions to Claude Code tools, u
 
 ## Output Root Configuration
 
-`coding-workflow` and `generating-reqable-docs` share an output root. The value is machine-specific and stored per-developer in the git-ignored `.agents/my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. It is never written into the shared `CLAUDE.md`.
+`coding-workflow` and `generating-reqable-docs` share an output root. The recommended default is `<repository root>/.agent-output`, inside the working repository, so a single-folder workspace can see and manage the records. The value is stored per-developer in the git-ignored `.my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. The block also records how the records are versioned: the `Records` disposition is `ignored-in-workspace` by default, `committed-in-workspace`, `standalone-repo`, or `unmanaged`. It is never written into the shared `CLAUDE.md`.
 
 ## Skill Directory Install
 

@@ -11,7 +11,7 @@ The plugin root is this repository. Its canonical plugin manifest is:
 Included skills:
 
 - `coding-workflow`
-- `my-init-config`
+- `my-config-manager`
 - `generating-reqable-docs`
 - `idea-shaping`
 - `subagent-takeover`
@@ -55,7 +55,7 @@ List loaded plugins:
 Invocation modes:
 
 - `coding-workflow`, `generating-reqable-docs`, `idea-shaping`, and `writing-skills` are user-only skills. Their frontmatter includes `disable-model-invocation: true`, so the model should not invoke them automatically.
-- `my-init-config` is model-invocable so it can configure, upgrade, or repair this plugin's per-project configuration for the current workspace. It also handles configuration writes and repairs delegated from other skills.
+- `my-config-manager` is model-invocable so it can initialize, modify, and validate this plugin's per-project configuration for the current workspace. It also handles configuration writes and repairs delegated from other skills.
 - `subagent-takeover` is model-invocable so `coding-workflow` can route to it after the user selects the multiple-subagents execution mode. It still runs only on that route or on explicit user invocation, never from a generic task category.
 - `using-tool` is model-invocable and mandatory before using any skill from this plugin. Agents must load it first, then load the runtime mapping file for the current agent/runtime before executing the target skill.
 
@@ -74,7 +74,7 @@ Examples:
 ```
 
 ```text
-/my-init-config set up this workspace's plugin configuration
+/my-config-manager set up this workspace's plugin configuration
 ```
 
 If a runtime tool rejects a user-only skill because of `disable-model-invocation: true`, the user invocation is still valid. The agent should read the matching `skills/<skill-name>/SKILL.md` file and follow it directly.
@@ -84,7 +84,7 @@ If a runtime tool rejects a user-only skill because of `disable-model-invocation
 | Skill | Mode | Use when... |
 |---|---|---|
 | `coding-workflow` | user-only | You explicitly want to plan, approve, implement, and validate non-trivial coding work with a lightweight workflow. |
-| `my-init-config` | model-invocable | You want to configure, upgrade, or repair this plugin's per-project configuration for the current workspace, or another plugin skill needs a managed configuration block created or repaired. |
+| `my-config-manager` | model-invocable | You want to initialize, modify, or validate this plugin's per-project configuration for the current workspace, or another plugin skill needs a managed configuration block created or repaired. |
 | `generating-reqable-docs` | user-only | You explicitly want to generate a Reqable Collection 3.0 JSON interface document from an API definition or reference collection. |
 | `idea-shaping` | user-only | You explicitly want to shape a product, feature, project, startup, side-project, or internal-tool idea. |
 | `subagent-takeover` | model-invocable (routed from `coding-workflow` or explicit invocation) | You selected the multiple-subagents execution mode in `coding-workflow`, or you explicitly want to split an approved plan into human-reviewed subtasks and execute them through a declared dispatch backend. |
@@ -162,7 +162,7 @@ Skill plan: the installer works with groups, and a group is always installed as 
 
 | Group key | Label | Skills |
 |---|---|---|
-| `core` (default) | Core workflow | `coding-workflow`, `subagent-takeover`, `my-init-config`, `using-tool` |
+| `core` (default) | Core workflow | `coding-workflow`, `subagent-takeover`, `my-config-manager`, `using-tool` |
 | `documents` | Documents | `generating-reqable-docs` |
 | `ideas-memory` | Ideas | `idea-shaping` |
 
@@ -279,7 +279,7 @@ Every runtime file under `skills/using-tool/runtimes/` therefore declares a **Su
 
 All four backends produce the same artifacts — the subtask document, the per-subtask feedback file, and the status table — so a runtime that cannot delegate degrades explicitly instead of silently changing the workflow's outcome.
 
-Declare the backend (and a concurrency cap) in the project-level `.agents/my-skills-local-config.md`:
+Declare the backend (and a concurrency cap) in the project-level `.my-skills-local-config.md`:
 
 ```markdown
 <!-- agent-dispatch:start -->
@@ -296,7 +296,7 @@ Declare the backend (and a concurrency cap) in the project-level `.agents/my-ski
 
 ### Toolchain Pins
 
-A machine can have several JDKs or several Node versions installed at once, so a run that builds or tests without saying which one it used is not reproducible. The toolchain item records the tool versions this workspace's runs should use, in the same `.agents/my-skills-local-config.md`:
+A machine can have several JDKs or several Node versions installed at once, so a run that builds or tests without saying which one it used is not reproducible. The toolchain item records the tool versions this workspace's runs should use, in the same `.my-skills-local-config.md`:
 
 ```markdown
 <!-- agent-toolchain:start -->
@@ -307,9 +307,20 @@ A machine can have several JDKs or several Node versions installed at once, so a
 <!-- agent-toolchain:end -->
 ```
 
-The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools you actually chose. `my-init-config` probes this machine for candidates (installed JDK directories, `nvm list`, `which java|node|python|mvn|gradle`) and offers them as the options, so a pin is never an uninstalled version or a stale path.
+The block is open-ended: one `<tool name>: <version or absolute path>` entry per pinned tool, and only the tools you actually chose. `my-config-manager` follows the project's actual languages instead of a fixed tool list: it detects them from marker files (`pom.xml`/`build.gradle` → JDK plus Maven or Gradle, `package.json` → Node, `go.mod` → Go, `Cargo.toml` → Rust, `pyproject.toml` → Python, `global.json`/`*.sln`/`*.csproj` → .NET), prefers a version the repository itself declares (`.nvmrc`, `global.json`, the `go` directive, `rust-version`, `maven.compiler.release`, `requires-python`, and similar), and then enumerates the versions installed on this machine from install roots and version managers — `java -version` / `node -v` only show the `PATH` default, which on a machine with several JDKs is one row out of many. It asks per detected language, so a pin is never an uninstalled version, a stale path, or a tool the project does not use.
 
 This item is registered ahead of its consumers: no skill reads it yet. Until one does, pinning a toolchain only records the intent.
+
+### Updating Configuration
+
+Configuration is not write-once. `my-config-manager` also runs an update flow when you ask it to change a value that is already valid:
+
+- **Toolchain correction** — re-detects the project's languages and this machine's installed builds, then classifies every existing pin as `current`, `stale` (the repository now declares another version), `unresolvable` (that version or path no longer exists), `orphan` (the language is gone), or `new-language` (no pin yet). It reports the classification and changes only the entries you pick.
+- **Output-root migration** — inventories the records under the old root (`plans/`, `complete/`, `subTasks/`, `reqable/`), asks whether to move them, copy them, or leave them, then verifies file counts and reads one migrated file before writing the new value. The old root is never deleted in the same step, and an old git repository there is left in place.
+- **Records disposition** — changes how the output root's records are versioned: ignored in the working repository (the recommended default for a root inside it), committed to it, kept in a standalone git repository at the output root, or unmanaged. The side effects (the ignore rule, the `git init`) follow the choice and are never improvised.
+- **Re-choosing an item** — dispatch fields and the ignore item are re-asked field by field, with "keep" as the default.
+
+An update never silently rewrites a valid value: the skill reports what looks stale and waits for the request.
 
 ## Repository Layout
 
@@ -321,7 +332,7 @@ my-skills/
 ├── skills/
 │   ├── coding-workflow/
 │   │   └── SKILL.md
-│   ├── my-init-config/
+│   ├── my-config-manager/
 │   │   └── SKILL.md
 │   ├── generating-reqable-docs/
 │   │   └── SKILL.md

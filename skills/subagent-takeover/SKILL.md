@@ -31,17 +31,18 @@ Second principle: **delegation is not portable, the contract is**. Runtimes diff
 
 ## Output Root
 
-Resolve the output root exactly as `coding-workflow` does. Read and honor the same managed block in the current runtime's designated project-level configuration location (Claude Code: `.agents/my-skills-local-config.md`):
+Resolve the output root exactly as `coding-workflow` does. Read and honor the same managed block in the current runtime's designated project-level configuration location (Claude Code: `.my-skills-local-config.md`):
 
 ```markdown
 <!-- agent-output-root:start -->
 ## Agent Output Configuration
 
 - Output root: `<absolute path>`
+- Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 ```
 
-Use the same resolution order and the same invalid-configuration rule as `coding-workflow`. Do not re-derive a different root. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. When the output root is missing or needs repair, delegate the create/repair to `my-init-config`; this skill only reads the value.
+Use the same resolution order and the same invalid-configuration rule as `coding-workflow`. Do not re-derive a different root. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. When the output root is missing or needs repair, delegate the create/repair to `my-config-manager`; this skill only reads the value.
 
 Paths under the output root for this skill:
 
@@ -53,13 +54,13 @@ Paths under the output root for this skill:
 
 The per-subtask feedback files are durable records, not scratch output. They must survive the coordinator process and be written by the subtask executor itself; see Step 5 and the Resume Protocol. The dispatch-prompt file is written only for the `manual` backend, where the prompt must be handed to a different session or client.
 
-Git: apply the same output-root git rule as `coding-workflow`. Commit the subtask document in the output-root repository only when the output root is a git repository; otherwise skip the commit and treat it as ignored. Do not commit into the working repository.
+Git: apply the same output-root git rule as `coding-workflow`: commit the subtask document in the repository that owns the output root (the working repository when the output root is inside it), and only when that repository commits the records per the rule; otherwise skip the commit and treat it as ignored. Never commit records that live outside the working repository into the working repository.
 
 ## Dispatch Backend
 
 Do not assume the current runtime has a native subagent with any particular dispatch semantics. Resolve exactly one backend **before** splitting, and record it in the subtask document.
 
-Read the managed block in the same project-level configuration file used for the output root (Claude Code: `.agents/my-skills-local-config.md`):
+Read the managed block in the same project-level configuration file used for the output root (Claude Code: `.my-skills-local-config.md`):
 
 ```markdown
 <!-- agent-dispatch:start -->
@@ -80,7 +81,7 @@ Resolution order:
 
 `CLI template` is required for the `cli` backend and is a free-form command declared by the user or the project; do not invent a headless command for a runtime that does not document one. `Max parallel` defaults to `1` when absent, which is the correct default when the model is served behind a local proxy. `Subagent model` records whether the subtask runs on the same model as the coordinator; when it is not `inherit` and the runtime cannot pin a model, prefer `cli`, because a spawned process carries its own model configuration.
 
-Creating or repairing the `agent-dispatch` managed block is owned by `my-init-config`. When the user wants a non-default backend persisted, or the block is missing, malformed, or duplicated, delegate that create/repair to `my-init-config`; this skill resolves the backend from the resulting block or the runtime default, and never writes the block itself.
+Creating or repairing the `agent-dispatch` managed block is owned by `my-config-manager`. When the user wants a non-default backend persisted, or the block is missing, malformed, or duplicated, delegate that create/repair to `my-config-manager`; this skill resolves the backend from the resulting block or the runtime default, and never writes the block itself.
 
 | Backend | How a subtask is executed | Turn-ending state |
 |---|---|---|
@@ -287,7 +288,7 @@ Plan: [<plan title>](../plans/YYYY-MM-DD-<topic>.md)
 - Subtask count: <n>
 - Created: YYYY-MM-DD
 - Dispatch backend: native | cli | sequential | manual
-- Backend source: declared in `.agents/my-skills-local-config.md` / runtime default (`<runtime>`) / resolution order
+- Backend source: declared in `.my-skills-local-config.md` / runtime default (`<runtime>`) / resolution order
 - Max parallel: <n>
 - Subagent model: inherit | <provider/model> | unknown
 
