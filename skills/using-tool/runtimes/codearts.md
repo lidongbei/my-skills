@@ -254,7 +254,7 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 ## Agent Output Configuration
 
 - Output root: `<absolute path>`
-- Records: ignored-in-workspace | committed-in-workspace | follow-workspace | standalone-repo | unmanaged
+- Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 ```
 
@@ -262,7 +262,7 @@ For shared output-root persistence used by `coding-workflow` and `generating-req
 - If a resolved, validated output root must be persisted and the file does not exist, use `write` (via `edit`) to create the file at the repository root containing exactly that managed block.
 - If it exists, use `edit` to append the block when absent, or replace only the content from `<!-- agent-output-root:start -->` through `<!-- agent-output-root:end -->` when exactly one valid block is present. Preserve all content outside that block.
 - In a version-controlled workspace, the configuration location file `.my-skills-local-config.md` is kept out of version control by an ignore rule that names that file (a workspace without version control has no such rule to add): the output root is per-developer, machine-specific state and must never be committed into the shared `CLAUDE.md`/`AGENTS.md`. Verifying and adding that rule is `my-config-manager`'s job, not the consuming skill's.
-- The output root may be inside the working repository: the recommended default is `<repository root>/.agent-output`, which keeps the records visible to and manageable from a single-folder workspace. The block's `Records` line fixes how the records relate to version control — `ignored-in-workspace` (the recommended disposition), `committed-in-workspace`, `follow-workspace`, `standalone-repo`, or `unmanaged`; the consuming skill's Git rule follows it, and `my-config-manager` owns the value and its side effects (the ignore rule, the `git init`). A block without the `Records` line is an old-shape block: treat it as malformed and hand off to `my-config-manager`, which repairs it by asking only the disposition.
+- The output root may be inside the working repository: the recommended default is `<repository root>/.agent-output`, which keeps the records visible to and manageable from a single-folder workspace. The block's `Records` line fixes how the records relate to version control — `ignored-in-workspace` (the recommended disposition), `committed-in-workspace`, `standalone-repo`, or `unmanaged`; the consuming skill's Git rule follows it, and `my-config-manager` owns the value and its side effects (the ignore rule, the `git init`). A block without the `Records` line is an old-shape block: treat it as malformed and hand off to `my-config-manager`, which repairs it by asking only the disposition.
 - Do not read, recognize, migrate, or reuse `coding-workflow:artifact-root` blocks. Do not read or use `CLAUDE.md`, `AGENTS.md`, `.codeartsdoer/rules/`, or any other file for this configuration.
 
 ## Shared Agent Dispatch Configuration

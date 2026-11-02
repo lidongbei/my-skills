@@ -1,6 +1,6 @@
 ---
 name: my-config-manager
-description: Use when initializing, modifying, or validating this plugin's per-project configuration for the current workspace: first-time setup in a new workspace, repairing missing, malformed, duplicated, or legacy configuration blocks or locations, updating a value that is already configured (correcting a pinned toolchain version, migrating the output root together with its records, choosing how the output root's records are versioned — committed to the working repository, ignored in it, left to follow the main repository's own rules, or kept in a standalone repository — re-choosing a configured item), auditing the current configuration read-only, or when another plugin skill needs a managed configuration block created, repaired, or corrected.
+description: Use when initializing, modifying, or validating this plugin's per-project configuration for the current workspace: first-time setup in a new workspace, repairing missing, malformed, duplicated, or legacy configuration blocks or locations, updating a value that is already configured (correcting a pinned toolchain version, migrating the output root together with its records, choosing how the output root's records are versioned — committed to the working repository, ignored in it, or kept in a standalone repository — re-choosing a configured item), auditing the current configuration read-only, or when another plugin skill needs a managed configuration block created, repaired, or corrected.
 ---
 
 # My Config Manager
@@ -52,7 +52,7 @@ The registered project-level configuration items for this plugin. Treat this tab
 
 | Config item | Managed block | Required fields | Consumed by | Necessity |
 |---|---|---|---|---|
-| Output root | `agent-output-root` | `Output root` = an absolute path; `Records` = the records disposition, one of `ignored-in-workspace`, `committed-in-workspace`, `follow-workspace`, `standalone-repo`, `unmanaged` (see Records disposition) | `coding-workflow`, `subagent-takeover`, `generating-reqable-docs` | Required |
+| Output root | `agent-output-root` | `Output root` = an absolute path; `Records` = the records disposition, one of `committed-in-workspace`, `ignored-in-workspace`, `standalone-repo`, `unmanaged` (see Records disposition) | `coding-workflow`, `subagent-takeover`, `generating-reqable-docs` | Required |
 | Dispatch | `agent-dispatch` | `Backend`; `CLI template` when `Backend: cli`; `Max parallel` (default `1`); `Subagent model` | `subagent-takeover` | Optional (absent → runtime default) |
 | Toolchain | `agent-toolchain` | At least one `<tool name>: <version or absolute path>` entry; every value resolves unambiguously to exactly one installed, runnable build on this machine | Registered for later consumers; no skill consumes it yet | Optional (absent → no pinned toolchain) |
 | Config location ignore | none — a version control ignore rule, not a block | The configuration location file itself is excluded by the workspace's version control, so the local config is never committed | the whole registry: a per-developer file that gets committed stops being per-developer | Required |
@@ -67,7 +67,6 @@ The `Records` field of the `agent-output-root` block fixes how the output root's
 |---|---|---|
 | `ignored-in-workspace` | The root lives inside the working repository and an ignore rule excludes exactly the output-root path; the records stay local and are never committed. | Root inside a version-controlled workspace |
 | `committed-in-workspace` | The root lives inside the working repository and the working repository commits the records. | Root inside a version-controlled workspace |
-| `follow-workspace` | The records follow the working repository's own rules exactly as they are: this skill adds no ignore rule, removes none, and reports no mismatch. | Root inside a version-controlled workspace |
 | `standalone-repo` | The root is its own git repository; records are committed there, never in the working repository. | Any root |
 | `unmanaged` | No version-control handling; the records stay unversioned. | Any root |
 
@@ -78,18 +77,20 @@ Probe before asking, and show the result: the question is unanswerable without i
 | Probe | Command | Why the user needs it |
 |---|---|---|
 | Workspace repository | `git -C "<workspace root>" rev-parse --show-toplevel` | whether the workspace is under version control at all, and where its root is |
-| Root inside that repository | compare the resolved output root with the repository root | whether `ignored-in-workspace`, `committed-in-workspace`, and `follow-workspace` are even legal here |
+| Root inside that repository | compare the resolved output root with the repository root | whether `ignored-in-workspace` and `committed-in-workspace` are even legal here |
 | Root's own repository | `git -C "<output root>" rev-parse --show-toplevel` | whether the root already is a standalone repository (then `standalone-repo` needs no `git init`) or would need one created |
-| Ignore coverage | `git check-ignore -v "<output root>"` | the exact rule, if any, that already covers the path — the fact behind `ignored-in-workspace` versus `follow-workspace` |
+| Ignore coverage | `git check-ignore -v "<output root>"` | the exact rule, if any, that already covers the path — the fact behind `ignored-in-workspace` |
 
-Show this as a short table before the question, and state what each offered option would do in that state — in particular whether 「输出根独立建库」 means running `git init` here or keeping an existing repository.
+Show this as a short table before the question, and state what each offered option would do in that state — in particular whether 「输出根独立建库」 means running `git init` here or keeping an existing repository. That probe is what answers the user's implicit "do we need to create a git repository at all?" — ask only after it.
 
-Ask the disposition as its own question, right after the output-root value — the path and the disposition are two decisions. When the chosen root is inside a version-controlled workspace, offer all five values and mark `ignored-in-workspace` as the recommended option (records are per-project working state and should not enter the shared history by default); present `follow-workspace` as the zero-touch alternative — the main repository's existing rules decide, and this skill adds nothing. For a root outside the workspace, or a workspace without version control, offer only `standalone-repo` and `unmanaged` and mark neither as recommended. Never offer a disposition the path cannot support — `ignored-in-workspace`, `committed-in-workspace`, and `follow-workspace` are meaningless outside a version-controlled workspace.
+Ask the disposition as its own question, right after the output-root value — the path and the disposition are two decisions. When the chosen root is inside a version-controlled workspace, `ignored-in-workspace` is the recommended option (records are per-project working state and should not enter the shared history by default), with `committed-in-workspace` and `standalone-repo` as alternatives. For a root outside the workspace, or a workspace without version control, offer `standalone-repo` and `unmanaged` and mark neither as recommended. Never offer a disposition the path cannot support — `committed-in-workspace` and `ignored-in-workspace` are meaningless outside a version-controlled workspace.
+
+There is no separate "follow the main repository" option: `committed-in-workspace` already means the records travel with the working repository under its own rules. Do not add a fifth value for it, and do not rename the existing one to describe the same behavior twice.
 
 Write that question and every option `label`/`description` in Chinese, like every other configuration `ask`; only the value written into the block stays as it is (`Records: ignored-in-workspace`). Example shape for a root inside a version-controlled workspace:
 
 - question: 「输出根的记录如何纳入版本控制？」
-- options: 「在工作仓库中忽略（推荐）」— 写入 `Records: ignored-in-workspace`，并为输出根路径添加忽略规则，记录留在本地、不进入提交 / 「随工作仓库提交」— 写入 `Records: committed-in-workspace`，计划与完成记录跟随工作仓库提交 / 「跟随主仓库」— 写入 `Records: follow-workspace`，沿用工作仓库现有的提交与忽略规则，本技能不添加、不修改任何规则，也不报告不一致 / 「输出根独立建库」— 写入 `Records: standalone-repo`，在输出根执行 `git init`（已是仓库时保留现状），记录只提交到该仓库 / 「不纳入版本控制」— 写入 `Records: unmanaged`，记录不作版本管理
+- options: 「在工作仓库中忽略（推荐）」— 写入 `Records: ignored-in-workspace`，并为输出根路径添加忽略规则，记录留在本地、不进入提交 / 「随工作仓库提交」— 写入 `Records: committed-in-workspace`，计划与完成记录跟随工作仓库提交 / 「输出根独立建库」— 写入 `Records: standalone-repo`，在输出根执行 `git init`，记录只提交到该仓库 / 「不纳入版本控制」— 写入 `Records: unmanaged`，记录不作版本管理
 
 For a root outside the workspace, or a workspace without version control, the same question offers only the last two labels, with no recommended marker.
 
@@ -97,9 +98,7 @@ The disposition has side effects this skill owns, applied only because the user 
 
 - `ignored-in-workspace` → add an ignore rule for exactly the output-root path, with the config-location ignore item's discipline: check for an equivalent rule first, append only the missing line, never rewrite the file.
 - `standalone-repo` → run `git init "<output root>"` when the root is not already a git repository. A `standalone-repo` root inside the working repository appears there as an untracked nested repository; offer ignoring that path in the working repository as a separate follow-up option, never silently.
-- `committed-in-workspace` → no ignore side effect. When such a root is nevertheless ignored in the working repository, report that the records will stay uncommitted; never remove an ignore rule on your own.
-- `follow-workspace` → nothing at all: no ignore rule, no `git init`, no mismatch report. The working repository's own rules decide, including an ignore rule that already covers the path — that state is what the user asked for, not a defect to flag.
-- `unmanaged` → no side effects.
+- `committed-in-workspace` and `unmanaged` → no side effects. When a `committed-in-workspace` root is nevertheless ignored in the working repository, report that the records will stay uncommitted; never remove an ignore rule on your own.
 
 An old-shape block (no `Records` line) is `malformed` — it misses a required field; the repair asks only the disposition question and appends the one line, without re-asking the path.
 
@@ -112,7 +111,7 @@ Write managed blocks in exactly this shape:
 ## Agent Output Configuration
 
 - Output root: `<absolute path>`
-- Records: ignored-in-workspace | committed-in-workspace | follow-workspace | standalone-repo | unmanaged
+- Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 
 <!-- agent-dispatch:start -->
@@ -236,7 +235,7 @@ First-time setup and repair of missing, malformed, duplicated, or legacy configu
 For each block-backed item, assign exactly one state from the `read` result:
 
 - `missing` — no managed block for the item.
-- `valid` — exactly one block, all required fields present and valid. For the output-root item this includes a `Records` line whose value is one of the five dispositions and is compatible with the path's location (`committed-in-workspace`, `ignored-in-workspace`, and `follow-workspace` require a root inside a version-controlled workspace).
+- `valid` — exactly one block, all required fields present and valid. For the output-root item this includes a `Records` line whose value is one of the four dispositions and is compatible with the path's location (`committed-in-workspace` and `ignored-in-workspace` require a root inside a version-controlled workspace).
 - `malformed` — duplicated blocks, truncated markers, a missing required field (an old-shape `agent-output-root` block without the `Records` line counts), or an invalid value.
 - `legacy-only` — only a block whose name is listed as legacy exists (for example `coding-workflow:artifact-root`). Legacy blocks are not valid configuration and must never be migrated or reused.
 
@@ -263,7 +262,7 @@ Write the question text, every option `label`, and every option `description` in
 
 Block names, field names, paths, versions, and any other value that gets written stay exactly as they are reported; only the human-facing wording is Chinese. A value harvested from a legacy location or a legacy block is presented as a candidate option the user may confirm — it is never adopted silently.
 
-- `missing` required item: use `ask` to let the user choose the value once. Mark the consumed skill's documented default as the recommended option (output-root default: `<repository root>/.agent-output`, inside the working repository; present an absolute path outside the workspace only as an alternative option). For the output-root item the value question is followed by the probe and the separate disposition question (see Records disposition): show the probed git state, recommend `ignored-in-workspace` when the chosen root is inside a version-controlled workspace, offer `follow-workspace` there as the zero-touch alternative, and offer only `standalone-repo` and `unmanaged` without a recommendation otherwise.
+- `missing` required item: use `ask` to let the user choose the value once. Mark the consumed skill's documented default as the recommended option (output-root default: `<repository root>/.agent-output`, inside the working repository; present an absolute path outside the workspace only as an alternative option). For the output-root item the value question is followed by the git probe and the separate disposition question (see Records disposition): show the probed git state first — repository, root containment, the root's own repository, ignore coverage — recommend `ignored-in-workspace` when the chosen root is inside a version-controlled workspace, and offer only `standalone-repo` and `unmanaged` without a recommendation otherwise.
 - `missing` optional item: use `ask` to let the user set it, skip it, or accept the runtime default; do not write a value silently.
 - Toolchain item, `missing`: detect the project's languages first (see Language-driven toolchain detection), then ask per detected language. Each language question offers the repository-declared version (recommended when installed), another version installed on this machine, skip, and a free-text value. When a declared version is not installed here, state that in the option description and recommend an installed one instead of a pin that cannot resolve. Detect instead of listing every popular tool: for a Java-only project, ask only about `JDK` and `Maven`/`Gradle`; never offer a tool the project does not use, and never pin a tool the user did not choose. Fall back to the generic "which tools do you want pinned" multi-select (JDK, Node, Python, Maven, Gradle, Go, Rust, .NET, plus a free-text "other") only when no marker file was found, and do not mark any tool as recommended in that fallback: with no marker there is no project language to derive a recommendation from.
 - `malformed` or `legacy-only`: do not repair or migrate silently. Use `ask` to present the exact conflict and the candidate resolutions (which block to keep, which to delete, or clear to `missing`) and let the user decide. Apply only what the user chose. When the only defect is a missing `Records` line, ask only the disposition question (see Records disposition) and append that one line — the existing path value is not re-asked.
@@ -286,7 +285,7 @@ Never touch a block the user did not ask to change, and preserve all content out
 
 The toolchain block is open-ended, so editing it never means rewriting the whole block: add, change, or remove only the entry lines for the tools the user chose this run, and preserve every other entry line and the markers exactly.
 
-When the output-root block was written or its `Records` line changed, apply the disposition's side effects now (see Records disposition): `ignored-in-workspace` → ensure the ignore rule for exactly the output-root path exists; `standalone-repo` → `git init "<output root>"` when it is not already a repository; `committed-in-workspace`, `follow-workspace`, and `unmanaged` → no side effect. The output-root directory must exist first — after the Records migration sub-flow when it ran.
+When the output-root block was written or its `Records` line changed, apply the disposition's side effects now (see Records disposition): `ignored-in-workspace` → ensure the ignore rule for exactly the output-root path exists; `standalone-repo` → `git init "<output root>"` when it is not already a repository. The output-root directory must exist first — after the Records migration sub-flow when it ran.
 
 For the config-location ignore item, use `edit` to add the ignore rule for the configuration location file **only when the user chose it**. Check for an equivalent existing rule first, and append only the missing line: never duplicate an ignore rule or rewrite the file. When the user chose to narrow an existing parent-directory rule instead, replace that one line with the file rule — do not touch any other line.
 
@@ -295,7 +294,7 @@ For the config-location ignore item, use `edit` to add the ignore rule for the c
 `check` by re-`read`ing the location. Verify, per written item:
 
 - the block appears exactly once with intact start/end markers;
-- the output root is an absolute path, is an existing directory or a creatable path (an existing file or non-creatable path is invalid), and is not the workspace root itself (records need their own directory, so an in-repo value such as `<repository root>/.agent-output` is valid but the repository root is not); the `Records` line holds one of the five dispositions, is compatible with the path's location, and its side effects are in place — `ignored-in-workspace` → `git check-ignore` names the output-root path; `standalone-repo` → `git -C "<output root>" rev-parse --show-toplevel` resolves to the output root itself; `committed-in-workspace` → `git check-ignore` does not match the path; `follow-workspace` → the root resolves inside the working repository, and no ignore or repository state is required of it;
+- the output root is an absolute path, is an existing directory or a creatable path (an existing file or non-creatable path is invalid), and is not the workspace root itself (records need their own directory, so an in-repo value such as `<repository root>/.agent-output` is valid but the repository root is not); the `Records` line holds one of the four dispositions, is compatible with the path's location, and its side effects are in place — `ignored-in-workspace` → `git check-ignore` names the output-root path; `standalone-repo` → `git -C "<output root>" rev-parse --show-toplevel` resolves to the output root itself; `committed-in-workspace` → `git check-ignore` does not match the path;
 - `Backend:` is one of `native | cli | sequential | manual`; `CLI template` is present when the backend is `cli`; `Max parallel` is an integer ≥ 1;
 - each toolchain entry has a non-empty tool name and value, no tool name appears twice, every pinned version or absolute path resolves on this machine against the enumerated inventory (not only the `PATH` default) to exactly one installed, runnable build — a bare version matching two builds or a directory holding no build fails — and every detected language's companion build tool (`Maven` or `Gradle` for Java/JVM) is either pinned or explicitly declined by the user.
 
@@ -356,7 +355,6 @@ The disposition governs side effects, so show the current state before asking: t
 
 - to `ignored-in-workspace` → add the ignore rule for exactly the output-root path;
 - to `standalone-repo` → `git init "<output root>"` when it is not already a repository;
-- to `committed-in-workspace` or `follow-workspace` → nothing to add; a `committed-in-workspace` root that stays ignored is reported as a mismatch, a `follow-workspace` root that is ignored is not;
 - away from `ignored-in-workspace` → offer removing the ignore rule as a separate explicit option, never remove it silently;
 - away from `standalone-repo` → leave the repository in place and say so; never deinitialize or delete it.
 
@@ -375,7 +373,7 @@ A read-only audit: answer "is this workspace's configuration healthy right now?"
 
 1. **Resolve context** exactly as Initialize step 1, including the legacy-location check.
 2. **Classify** every registry item with the Initialize step-2 states.
-3. **Verify values against reality** with the Initialize step-7 checks, read-only: block shape and markers; the output root is absolute, is not the workspace root, and exists or is creatable (a missing directory is a finding to report, not something to create); the `Records` disposition is present, valid, location-compatible, and its side effects hold — `ignored-in-workspace` → the ignore rule covers the output-root path, `standalone-repo` → the root is a git repository, `committed-in-workspace` → the path is not ignored, `follow-workspace` → nothing is required of the path, so an ignore rule over it is not a finding — and a mismatch is `drift-detected`, with the report naming the Modify flow (`U7`) that resolves it; dispatch fields; every toolchain pin still resolves against the enumerated machine inventory to exactly one installed, runnable build; the ignore rule still covers the configuration location file (`git check-ignore` evidence).
+3. **Verify values against reality** with the Initialize step-7 checks, read-only: block shape and markers; the output root is absolute, is not the workspace root, and exists or is creatable (a missing directory is a finding to report, not something to create); the `Records` disposition is present, valid, location-compatible, and its side effects hold — `ignored-in-workspace` → the ignore rule covers the output-root path, `standalone-repo` → the root is a git repository, `committed-in-workspace` → the path is not ignored — and a mismatch is `drift-detected`, with the report naming the Modify flow (`U7`) that resolves it; dispatch fields; every toolchain pin still resolves against the enumerated machine inventory to exactly one installed, runnable build; the ignore rule still covers the configuration location file (`git check-ignore` evidence).
 4. **Records-drift check** — the audit's core. List the configured output root and every previous-root candidate (values harvested from legacy locations or blocks, malformed duplicates, and the sibling `<parent>/<project name>__agent` path), stating for each whether it exists and what it holds. Report `drift-detected` when the configured root is missing or empty while a candidate holds record directories (`plans/`, `complete/`, `subTasks/`, `reqable/`, `docs/`): a past run changed the value without migrating the records, and a Modify run (`U4`) resolves it.
 5. **Staleness**: a pinned version that no longer resolves or no longer matches the repository is reported as `unresolvable` or `stale` (the Modify `U3` vocabulary) with a recommendation; it is never corrected here.
 6. **Report** with the Output Contract. `State before` is the classified state; `Action taken` is `audited` with what was checked; `Value written` is always `none (read-only)`; per-item `Status` is `valid`, `missing`, `malformed`, `legacy-only`, `stale`, or `drift-detected`. A Validate run never reports `configured` and never claims the workspace is configured.
@@ -389,7 +387,7 @@ Always end with this report, one row per registry item:
 
 - `Status` is `configured`, `already-valid`, `skipped-by-user`, or `unresolved`; a Validate run uses `valid`, `missing`, `malformed`, `legacy-only`, `stale`, or `drift-detected` instead.
 - `Validation evidence` cites the fresh re-`read` result, not an assertion.
-- When a run wrote or audited an output-root value, `Action taken` states the records migration outcome (`moved N files from <old root>`, `copied N files from <old root>`, `left in place by user choice`, or `no previous records`) and the configured `Records` disposition (`ignored-in-workspace`, `committed-in-workspace`, `follow-workspace`, `standalone-repo`, or `unmanaged`).
+- When a run wrote or audited an output-root value, `Action taken` states the records migration outcome (`moved N files from <old root>`, `copied N files from <old root>`, `left in place by user choice`, or `no previous records`) and the configured `Records` disposition (`ignored-in-workspace`, `committed-in-workspace`, `standalone-repo`, or `unmanaged`).
 - A run that wrote a new output-root value while records remained under a previous root without an explicit user choice reports `unresolved` and says exactly which files stayed where.
 - If any item is `unresolved`, do not claim the workspace is configured.
 - A delegated run returns control with this report; the invoking skill then consumes the reported values or states.
@@ -405,8 +403,8 @@ Always end with this report, one row per registry item:
 | Treating one `ask` answer as covering both the new output-root value and the records. | They are two decisions — the value (which root) and what happens to the records (move, copy, or leave); ask both. The `Records` disposition (how the records are versioned) is a third question, asked right after the value. |
 | Inferring the records' Git handling from the output root's location. | The `Records` field is a configured choice, never inferred; ask it with the option set for the root's location, recommending `ignored-in-workspace` inside a version-controlled workspace. |
 | Writing or removing an output-root ignore rule without the matching disposition choice. | An output-root ignore rule changes only as the side effect of a chosen `Records` disposition — added for `ignored-in-workspace`, removed only as an explicit separate option when switching away. |
-| Reporting an ignore rule over a `follow-workspace` root as `drift-detected`. | `follow-workspace` accepts whatever the working repository already does; only `committed-in-workspace` treats a covering ignore rule as a mismatch. |
 | Asking the disposition without first probing the git reality. | Probe the workspace repository, whether the root sits inside it, whether it has its own repository, and its ignore coverage; show that table so the options are readable. |
+| Adding a separate "follow the main repository" disposition. | `committed-in-workspace` already means the records travel with the working repository; do not offer the same behavior as two options. |
 | Treating an old-shape `agent-output-root` block (no `Records` line) as valid. | Classify it `malformed` (missing required field); repair by asking only the disposition and appending that one line. |
 | Creating a missing directory "to be helpful" during an audit. | Validate is read-only; report the missing directory as a finding. |
 | Reading a legacy configuration location as if it were the live configuration. | Harvest candidate values only; resolve through `ask`; leave the legacy file untouched unless the user chooses otherwise. |
