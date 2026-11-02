@@ -61,6 +61,26 @@ Output-root default: the recommended value is `.agent-output`, inside the workin
 
 Output-root path form: a root inside the repository is stored **relative to the repository root** — the recommended default is written `.agent-output`, never an absolute path. A relative value resolves against the repository root, or against the workspace root in a workspace without version control, must stay inside its anchor (a `..` segment that escapes it is invalid), and is meaningless where no anchor resolves. A root outside the repository is stored as an absolute path. An existing in-repo value written as an absolute path stays `valid` — valid values are never rewritten unasked — but the report names the portable relative form, and a Modify run converts it without moving anything (`U4`). Consumers of the registry resolve a relative value against the same anchor before using it.
 
+### Workspace repository initialization
+
+This decision concerns the **working directory being configured** — `<workspace root>`, the directory the runtime opened — never this plugin's own repository. The skill does not manage, initialize, or commit anything in the plugin checkout; a run inside a project answers only for the project.
+
+Probe the workspace repository before any other configuration question, because the answer decides which records dispositions and which ignore items are available at all:
+
+- `git -C "<workspace root>" rev-parse --show-toplevel` — a path here, at the workspace root or an ancestor, means the workspace is version-controlled; no output means it is not.
+
+When the probe finds no repository at the workspace root or any ancestor, ask about it **first, ahead of every other question in the run**: a missing repository is the user's decision, not a dead end.
+
+- question: 「当前工作目录还不是 git 仓库（没有 `.git`）。是否在这里初始化一个 git 仓库？」
+- options: 「在此工作目录执行 git init（推荐：这是新项目）」— 我在 `<workspace root>` 运行 `git init`，随后重新探测并继续配置 / 「我自己 clone 或建库，稍后再配置」— 本次运行不写入也不创建任何文件（目录保持为空，`git clone` 才能用），状态记为 `unresolved` / 「不初始化，记录不进版本控制」— 不建库，输出根记录处置只提供「输出根独立建库」与「不纳入版本控制」
+
+Rules for the three answers:
+- 「在此工作目录执行 git init」 → run `git init` in `<workspace root>` because the user chose it in this question — the same consent rule as `standalone-repo`. Re-probe, report the new repository root, then continue with the remaining questions. The config-location ignore item is now `missing` and is asked as Initialize step 4 describes.
+- 「我自己 clone 或建库」 → write nothing and create nothing (an empty directory is exactly what `git clone` needs), report the run as `unresolved`, name the command the user is expected to run, and state that a re-run continues the configuration. Never sit idle waiting, and never assume they want the skill to initialize it.
+- 「不初始化」 → offer only `standalone-repo` and `unmanaged` for the records disposition, with no recommended marker.
+
+The question is asked at most once per run, only when the probe finds no repository, and always before the output-root value and its disposition.
+
 ### Records disposition
 
 The `Records` field of the `agent-output-root` block fixes how the output root's records relate to version control. It is a configured choice, never inferred from the path's location:
@@ -78,26 +98,14 @@ Probe before asking, and show the result: the question is unanswerable without i
 
 | Probe | Command | Why the user needs it |
 |---|---|---|
-| Workspace repository | `git -C "<workspace root>" rev-parse --show-toplevel` | whether the workspace is under version control at all, and where its root is — "none" makes the initialization question below come first |
+| Workspace repository | `git -C "<workspace root>" rev-parse --show-toplevel` | whether the workspace is under version control at all, and where its root is — already established by Workspace repository initialization, whose question is asked first when it found nothing |
 | Root inside that repository | compare the resolved output root with the repository root | whether `ignored-in-workspace` and `committed-in-workspace` are even legal here |
 | Root's own repository | `git -C "<output root>" rev-parse --show-toplevel` | whether the root already is a standalone repository (then `standalone-repo` needs no `git init`) or would need one created |
 | Ignore coverage | `git check-ignore -v "<output root>"` | the exact rule, if any, that already covers the path — the fact behind `ignored-in-workspace` |
 
 Show this as a short table before the question, and state what each offered option would do in that state — in particular whether 「输出根独立建库」 means running `git init` here or keeping an existing repository. That probe is what answers the user's implicit "do we need to create a git repository at all?" — ask only after it.
 
-#### When the workspace is not yet a repository
-
-When the probe finds no version-controlled repository at the workspace root or any ancestor, the missing repository is a decision for the user, not a dead end: ask about it before the disposition, and offer to create one.
-
-- question: 「当前工作区还不是 git 仓库（没有 `.git`）。是否在这里初始化一个 git 仓库？」
-- options: 「在此工作区执行 git init（推荐：这是新项目）」— 我在 `<workspace root>` 运行 `git init`，随后重新探测并按完整处置列表继续 / 「我自己 clone 或建库，稍后再配置」— 本次运行不写入也不创建任何文件（目录保持为空，`git clone` 才能用），状态记为 `unresolved` / 「不初始化，记录不进版本控制」— 不建库，记录处置只提供「输出根独立建库」与「不纳入版本控制」
-
-Rules for the three answers:
-- `git init` in the workspace is this skill's action **only because the user chose it in that question** — the same consent rule as `standalone-repo`. Run it, re-probe, report the new repository root, and only then ask the disposition. The workspace now also has the config-location ignore item, which turns `missing`: offer that rule as step 4 describes.
-- "I will create it myself" → write nothing and create nothing (an empty directory is exactly what `git clone` needs), report the run as `unresolved`, name the command the user is expected to run, and state that a re-run continues the configuration. Never sit idle waiting, and never assume they want the skill to initialize it.
-- "Do not initialize" → offer only `standalone-repo` and `unmanaged`, with no recommended marker.
-
-Ask the disposition as its own question, right after the output-root value — the path and the disposition are two decisions. When the chosen root is inside a version-controlled workspace, `ignored-in-workspace` is the recommended option (records are per-project working state and should not enter the shared history by default), with `committed-in-workspace` and `standalone-repo` as alternatives. For a root outside the workspace, or a workspace where the initialization question was answered "do not initialize", offer `standalone-repo` and `unmanaged` and mark neither as recommended. Never offer a disposition the path cannot support — `committed-in-workspace` and `ignored-in-workspace` are meaningless outside a version-controlled workspace.
+Ask the disposition as its own question, right after the output-root value — the path and the disposition are two decisions. When the chosen root is inside a version-controlled workspace, `ignored-in-workspace` is the recommended option (records are per-project working state and should not enter the shared history by default), with `committed-in-workspace` and `standalone-repo` as alternatives. For a root outside the workspace, or a workspace where Workspace repository initialization was answered 「不初始化」, offer `standalone-repo` and `unmanaged` and mark neither as recommended. Never offer a disposition the path cannot support — `committed-in-workspace` and `ignored-in-workspace` are meaningless outside a version-controlled workspace.
 
 There is no separate "follow the main repository" option: `committed-in-workspace` already means the records travel with the working repository under its own rules. Do not add a fifth value for it, and do not rename the existing one to describe the same behavior twice.
 
@@ -106,7 +114,7 @@ Write that question and every option `label`/`description` in Chinese, like ever
 - question: 「输出根的记录如何纳入版本控制？」
 - options: 「在工作仓库中忽略（推荐）」— 写入 `Records: ignored-in-workspace`，并为输出根路径添加忽略规则，记录留在本地、不进入提交 / 「随工作仓库提交」— 写入 `Records: committed-in-workspace`，计划与完成记录跟随工作仓库提交 / 「输出根独立建库」— 写入 `Records: standalone-repo`，在输出根执行 `git init`，记录只提交到该仓库 / 「不纳入版本控制」— 写入 `Records: unmanaged`，记录不作版本管理
 
-For a root outside the workspace, or a workspace where the initialization question was declined, the same question offers only the last two labels, with no recommended marker.
+For a root outside the workspace, or a workspace where Workspace repository initialization was answered 「不初始化」, the same question offers only the last two labels, with no recommended marker.
 
 The disposition has side effects this skill owns, applied only because the user chose the disposition — the ask is the consent:
 
@@ -243,6 +251,7 @@ First-time setup and repair of missing, malformed, duplicated, or legacy configu
 2. `read` that location. If it does not exist, treat every block-backed registry item as `missing`.
 3. Resolve the repository root: the workspace root is the directory the runtime opened as the workspace; the repository root is the nearest ancestor of the workspace root containing a version control root (`.git`), and in a workspace without version control it is the workspace root itself. The configuration location file lives at the repository root.
 4. Check for legacy configuration locations (see Legacy configuration locations). When the canonical location is absent but a legacy file exists, the run is a location migration: harvest candidate prior values from the legacy file and plan the re-initialization at the canonical location.
+5. Probe the workspace repository (see Workspace repository initialization) and, when the workspace root and every ancestor lack `.git`, ask that section's initialization question now — before the output-root value, the disposition, and every other configuration question — because its answer decides which dispositions and ignore items this run may offer. Never defer it to the disposition step.
 
 ### 2. Classify each registry item
 
@@ -276,7 +285,7 @@ Write the question text, every option `label`, and every option `description` in
 
 Block names, field names, paths, versions, and any other value that gets written stay exactly as they are reported; only the human-facing wording is Chinese. A value harvested from a legacy location or a legacy block is presented as a candidate option the user may confirm — it is never adopted silently.
 
-- `missing` required item: use `ask` to let the user choose the value once. Mark the consumed skill's documented default as the recommended option (output-root default: `.agent-output`, inside the working repository, written relative to the repository root; present a path outside the workspace only as an alternative option, written absolute). For the output-root item the value question is followed by the git probe and the separate disposition question (see Records disposition): show the probed git state first — repository, root containment, the root's own repository, ignore coverage. When the probe finds no repository at all, ask the initialization question from "When the workspace is not yet a repository" before the disposition, and offer the full disposition list only if the user chose to create one; when the chosen root is inside a version-controlled workspace, recommend `ignored-in-workspace`, and otherwise offer only `standalone-repo` and `unmanaged` without a recommendation.
+- `missing` required item: use `ask` to let the user choose the value once. Mark the consumed skill's documented default as the recommended option (output-root default: `.agent-output`, inside the working repository, written relative to the repository root; present a path outside the workspace only as an alternative option, written absolute). For the output-root item the value question is followed by the git probe and the separate disposition question (see Records disposition): show the probed git state first — repository, root containment, the root's own repository, ignore coverage. When step 1's probe found no repository at all, the answer already given to Workspace repository initialization decides the option set here — the full list only if the user chose to create the repository — and the question is never repeated; when the chosen root is inside a version-controlled workspace, recommend `ignored-in-workspace`, and otherwise offer only `standalone-repo` and `unmanaged` without a recommendation.
 - `missing` optional item: use `ask` to let the user set it, skip it, or accept the runtime default; do not write a value silently.
 - Toolchain item, `missing`: detect the project's languages first (see Language-driven toolchain detection), then ask per detected language. Each language question offers the repository-declared version (recommended when installed), another version installed on this machine, skip, and a free-text value. When a declared version is not installed here, state that in the option description and recommend an installed one instead of a pin that cannot resolve. Detect instead of listing every popular tool: for a Java-only project, ask only about `JDK` and `Maven`/`Gradle`; never offer a tool the project does not use, and never pin a tool the user did not choose. Fall back to the generic "which tools do you want pinned" multi-select (JDK, Node, Python, Maven, Gradle, Go, Rust, .NET, plus a free-text "other") only when no marker file was found, and do not mark any tool as recommended in that fallback: with no marker there is no project language to derive a recommendation from.
 - `malformed` or `legacy-only`: do not repair or migrate silently. Use `ask` to present the exact conflict and the candidate resolutions (which block to keep, which to delete, or clear to `missing`) and let the user decide. Apply only what the user chose. When the only defect is a missing `Records` line, ask only the disposition question (see Records disposition) and append that one line — the existing path value is not re-asked.
