@@ -90,7 +90,7 @@ The `Records` field of the `agent-output-root` block fixes how the output root's
 | `ignored-in-workspace` | The root lives inside the working repository and an ignore rule excludes exactly the output-root path; the records stay local and are never committed. | Root inside a version-controlled workspace |
 | `committed-in-workspace` | The root lives inside the working repository and the working repository commits the records. | Root inside a version-controlled workspace |
 | `standalone-repo` | The root is its own git repository; records are committed there, never in the working repository. | Any root |
-| `unmanaged` | No version-control handling; the records stay unversioned. | Any root |
+| `unmanaged` | No version-control handling; the records stay unversioned. Inside a version-controlled workspace that means the records show up as untracked paths in every `git status` — state that in the option description rather than letting the user discover it. | Any root |
 
 #### Probe the git reality first
 
@@ -121,6 +121,8 @@ The disposition has side effects this skill owns, applied only because the user 
 - `ignored-in-workspace` → add an ignore rule for exactly the output-root path, with the config-location ignore item's discipline: check for an equivalent rule first, append only the missing line, never rewrite the file.
 - `standalone-repo` → run `git init "<output root>"` when the root is not already a git repository. A `standalone-repo` root inside the working repository appears there as an untracked nested repository; offer ignoring that path in the working repository as a separate follow-up option, never silently.
 - `committed-in-workspace` and `unmanaged` → no side effects. When a `committed-in-workspace` root is nevertheless ignored in the working repository, report that the records will stay uncommitted; never remove an ignore rule on your own.
+
+Describe every option by what it produces, never mainly by what it avoids. The recommended combination — `.agent-output` inside the repository with `ignored-in-workspace` — costs exactly one appended ignore line; that single cost is not a reason to recommend a root outside the workspace, and an existing sibling `<project>__agent` directory is a migration candidate, never a precedent that outranks the documented default.
 
 An old-shape block (no `Records` line) is `malformed` — it misses a required field; the repair asks only the disposition question and appends the one line, without re-asking the path.
 
@@ -425,6 +427,8 @@ Always end with this report, one row per registry item:
 |---|---|
 | Silently picking a default output root. | Use `ask`; present the default only as the recommended option. |
 | Defaulting the output root to a sibling of the repository (`<parent>/<project name>__agent`). | Recommend `.agent-output` inside the repository, stored relative to the repository root; a sibling directory is invisible to single-folder workspaces. |
+| Recommending an out-of-repository root because the in-repository one would need a tracked `.gitignore` line. | One appended ignore line is the documented cost of `ignored-in-workspace`; avoiding a tracked-file edit is not a reason to move the workspace's records out of the workspace. |
+| Citing an existing sibling `<project>__agent` directory as precedent for the recommendation. | A sibling directory is at most a migration candidate; it never outranks the documented `.agent-output` default. |
 | Creating the new output-root directory and reporting `configured` while the old root still holds the records. | Creating the destination is step zero of the Records migration sub-flow, not the migration; run the full sub-flow and verify counts and checksums before writing the value. |
 | Migrating the configuration file to a new location without asking where the old output root's records live. | Harvest every previous output-root value during classification and run the Records migration sub-flow for each non-empty candidate. |
 | Treating one `ask` answer as covering both the new output-root value and the records. | They are two decisions — the value (which root) and what happens to the records (move, copy, or leave); ask both. The `Records` disposition (how the records are versioned) is a third question, asked right after the value. |
