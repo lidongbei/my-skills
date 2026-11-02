@@ -37,7 +37,7 @@ Each runtime mapping defines one project-level location for shared output-root c
 ## Agent Output Configuration
 
 - Output root: `<absolute path>`
-- Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
+- Records: ignored-in-workspace | committed-in-workspace | follow-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 ```
 
@@ -61,6 +61,7 @@ Git: the block's `Records` line fixes how the plans and completion records relat
 
 - **`committed-in-workspace`**: commit plans and completion records in the working repository, following its existing rules. If the working repository ignores the output root (for example `git check-ignore -q "<output root>"` succeeds), do not force-add it: leave the records uncommitted, say so, and report the mismatch — the disposition and reality disagree, and a `my-config-manager` Modify run resolves it.
 - **`ignored-in-workspace`**: never commit the records; they stay local by design. If `git check-ignore` shows the output root is not actually ignored, report the mismatch — writing the ignore rule is `my-config-manager`'s side effect, not this skill's.
+- **`follow-workspace`**: follow the working repository's own rules exactly as they are — commit plans and completion records where the repository already tracks them, and leave them uncommitted where its ignore rules already exclude them. Never add, remove, or force past a rule; the resulting state is the configured one, so there is no mismatch to report.
 - **`standalone-repo`**: commit plans and completion records in the output-root repository (`git -C "<output root>" ...`). If the output root is not a git repository, the disposition was never applied — report it and delegate to `my-config-manager` instead of running `git init` here.
 - **`unmanaged`**: skip the commit and say the records stay unversioned.
 
