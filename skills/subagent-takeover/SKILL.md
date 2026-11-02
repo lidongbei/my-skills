@@ -37,7 +37,7 @@ Resolve the output root exactly as `coding-workflow` does. Read and honor the sa
 <!-- agent-output-root:start -->
 ## Agent Output Configuration
 
-- Output root: `<absolute path>`
+- Output root: `<relative to the repository root, e.g. .agent-output; absolute when outside it>`
 - Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 ```

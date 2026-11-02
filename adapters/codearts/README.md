@@ -68,7 +68,7 @@ That runtime file maps portable tool-action aliases (`ask`, `read`, `find`, `edi
 
 ## Output Root Configuration
 
-`coding-workflow` and `generating-reqable-docs` share an output root. The recommended default is `<repository root>/.agent-output`, inside the working repository, so a single-folder workspace can see and manage the records. The value is stored per-developer in the git-ignored `.my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. The block also records how the records are versioned: the `Records` disposition is `ignored-in-workspace` by default, `committed-in-workspace`, `standalone-repo`, or `unmanaged`. It is never written into the shared `CLAUDE.md`/`AGENTS.md` or `.codeartsdoer/`.
+`coding-workflow` and `generating-reqable-docs` share an output root. The recommended default is `.agent-output`, inside the working repository (stored as a path relative to the repository root, so it survives cloning or moving the repository), so a single-folder workspace can see and manage the records. The value is stored per-developer in the git-ignored `.my-skills-local-config.md` as an `agent-output-root` managed block, read/written through the `using-tool` runtime mapping. The block also records how the records are versioned: the `Records` disposition is `ignored-in-workspace` by default, `committed-in-workspace`, `standalone-repo`, or `unmanaged`. It is never written into the shared `CLAUDE.md`/`AGENTS.md` or `.codeartsdoer/`.
 
 ## CodeArts-Specific Capabilities
 

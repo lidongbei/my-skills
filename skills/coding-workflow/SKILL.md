@@ -28,7 +28,7 @@ Non-trivial means a wrong edit could affect behavior, touch multiple files, requ
 
 Plan and completion records are saved under a configurable **output root**. The same output-root configuration is shared by `coding-workflow`, `generating-reqable-docs`, and `subagent-takeover`.
 
-Default output root: `<repository root>/.agent-output`, inside the working repository, so a single-folder workspace can see and manage the records. An absolute path outside the workspace (for example the repository's parent directory plus `<project name>__agent`) is also valid when the user explicitly chooses it.
+Default output root: `.agent-output`, inside the working repository, so a single-folder workspace can see and manage the records. Inside the repository it is stored as a path relative to the repository root, so the configuration keeps working when the repository is cloned, moved, or opened through another path; resolving it means resolving against the repository root (the workspace root when there is no version control). An absolute path outside the workspace (for example the repository's parent directory plus `<project name>__agent`) is also valid when the user explicitly chooses it, and stays absolute.
 
 Each runtime mapping defines one project-level location for shared output-root configuration. Read and update only that location; do not guess, scan, or modify other instruction/configuration files. The managed configuration block lives in the git-ignored local markdown file designated by the runtime mapping (`.my-skills-local-config.md`):
 
@@ -36,7 +36,7 @@ Each runtime mapping defines one project-level location for shared output-root c
 <!-- agent-output-root:start -->
 ## Agent Output Configuration
 
-- Output root: `<absolute path>`
+- Output root: `<relative to the repository root, e.g. .agent-output; absolute when outside it>`
 - Records: ignored-in-workspace | committed-in-workspace | standalone-repo | unmanaged
 <!-- agent-output-root:end -->
 ```
@@ -45,7 +45,7 @@ Resolve the output root for the current session, in this order:
 
 1. If a root was already resolved in this session and the user has not explicitly supplied a different path, reuse it.
 2. If the user explicitly gave a directory in the invocation or an earlier message, use it after validating it. To persist that value, delegate the write to `my-config-manager`; do not write the managed block here.
-3. Otherwise, read the current runtime mapping's project-level location. If it contains exactly one valid managed block with a nonempty absolute `Output root` path and a valid `Records` disposition, use that path after validating it.
+3. Otherwise, read the current runtime mapping's project-level location. If it contains exactly one valid managed block with a nonempty `Output root` value in the required form — relative to the repository root when it points inside the repository, absolute when it points outside — and a valid `Records` disposition, resolve the value and use that path after validating it.
 4. If the designated location has no managed block, or holds a malformed, duplicated, or legacy-only configuration, hand off to `my-config-manager` to create or repair the output-root configuration interactively, then use the value it reports.
 
 Creating or repairing the managed block is owned by `my-config-manager`; `coding-workflow` only reads and validates the value. Do not read, recognize, migrate, or reuse legacy `coding-workflow:artifact-root` blocks. Do not silently repair a malformed or duplicated block, fall back to another file, or overwrite the designated location; that repair is `my-config-manager`'s delegated job, decided by the user.
