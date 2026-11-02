@@ -57,7 +57,7 @@ Paths under the output root:
 <output root>/complete/YYYY-MM-DD-<topic>.md
 ```
 
-Git: the block's `Records` line fixes how the plans and completion records relate to version control — follow the configured disposition, never the path's location alone:
+Git: the block's `Records` line fixes how the plans and completion records relate to version control — follow the configured disposition, never the path's location alone. A workspace that is not a git repository has no disposition requiring one: when a block says `committed-in-workspace` or `ignored-in-workspace` there, report the mismatch and let `my-config-manager` resolve it (it asks whether to initialize a repository before offering those values); never initialize the workspace from here as a shortcut.
 
 - **`committed-in-workspace`**: commit plans and completion records in the working repository, following its existing rules. If the working repository ignores the output root (for example `git check-ignore -q "<output root>"` succeeds), do not force-add it: leave the records uncommitted, say so, and report the mismatch — the disposition and reality disagree, and a `my-config-manager` Modify run resolves it.
 - **`ignored-in-workspace`**: never commit the records; they stay local by design. If `git check-ignore` shows the output root is not actually ignored, report the mismatch — writing the ignore rule is `my-config-manager`'s side effect, not this skill's.
